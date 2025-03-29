@@ -24,3 +24,5 @@ venv/
 
 # Fichiers de projet perso
 *.bak
+
+.idea/
