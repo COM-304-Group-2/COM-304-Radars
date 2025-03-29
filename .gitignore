@@ -1,1 +1,26 @@
+# Fichiers système macOS
+.DS_Store
+
+# Dossiers Python
+__pycache__/
+*.pyc
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Fichiers temporaires / backup
+*.log
+*.tmp
+*~
+
+# Environnement virtuel
+env/
+venv/
+
+# Fichiers de MATLAB ou data
 *.mat
+*.csv
+*.mat
+
+# Fichiers de projet perso
+*.bak
