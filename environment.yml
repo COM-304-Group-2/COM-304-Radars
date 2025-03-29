@@ -1,0 +1,11 @@
+name: comm-proj
+channels:
+  - defaults
+dependencies:
+  - scipy
+  - h5py
+  - numpy
+  - matplotlib
+  - tensorflow
+  - ipykernel
+prefix: /Users/shanbhag/anaconda3/envs/comm-proj
