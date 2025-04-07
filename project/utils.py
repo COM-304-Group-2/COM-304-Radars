@@ -42,6 +42,46 @@ def get_ant_pos_2d(num_x_stp, num_z_stp, num_rx):
     z_pos = z_pos - z_pos[0,0]
     return x_ant_pos, z_pos, x_pos
 
+def get_ant_static_2d(num_frames, num_tx, num_rx, adc_samples):
+    """
+    Computes virtual antenna positions for static radar setup.
+
+    Args:
+        num_frames: number of frames
+        num_tx: number of transmit antennas
+        num_rx: number of receive antennas
+        adc_samples: number of ADC samples per chirp
+
+    Returns:
+        x_ant_pos: np.ndarray of virtual antenna x-positions
+        z_ant_pos: np.ndarray of virtual antenna z-positions
+    """
+    lm = 3e8 / 77e9  # lambda for 77 GHz
+
+    RX_X = np.array([-3*lm/2, -lm, -lm/2, 0])      # 4 Rx
+    RX_Z = np.array([0, 0, 0, 0])
+    TX_X = np.array([0, lm, 2*lm])                 # 3 Tx
+    TX_Z = np.array([0, lm/2, 0])
+
+    x_ant_pos = []
+    z_ant_pos = []
+
+    for tx_i in range(num_tx):
+        for rx_i in range(num_rx):
+            x = TX_X[tx_i] + RX_X[rx_i]
+            z = TX_Z[tx_i] + RX_Z[rx_i]
+            x_ant_pos.append(x)
+            z_ant_pos.append(z)
+
+    x_ant_pos = np.array(x_ant_pos)
+    z_ant_pos = np.array(z_ant_pos)
+
+    # Optional: make origin zero-centered
+    x_ant_pos -= np.min(x_ant_pos)
+    z_ant_pos -= np.min(z_ant_pos)
+
+    return x_ant_pos, z_ant_pos
+
 # Helper function to get point cloud values
 def plot_3d_cart_heatmap(ax,voxel,xaxis,yaxis,zaxis,threshold):
     '''' Returns X,Y,Z positions of voxels with power above a threshold.
@@ -79,28 +119,23 @@ def plot_3d_cart_heatmap(ax,voxel,xaxis,yaxis,zaxis,threshold):
     # Add a grid and make it interactive (movable)
     ax.grid(True)
 
-    # return X_, Y_, Z_, intesn
+    # return X_, Y_, Z_, intesn 
+
 
 def load_raw_data(data_path):
-    mat_data = sio.loadmat(data_path)
-    raw_data = mat_data['adcData']
-    num_x_stp, num_z_stp, adc_samples = raw_data.shape
-    radar_params = {'sample_rate': 10e6, 'num_samples': 512, 'slope':70.295e12, 'lm': 3/785., 'num_x_stp': num_x_stp, 'num_z_stp': num_z_stp, 'num_tx': 1, 'num_rx': 4, 'adc_samples': adc_samples}
-    return radar_params, raw_data
-
-
-def load_raw_data_2(data_path):
     import scipy.io as sio
     mat_data = sio.loadmat(data_path)
+
     raw_data = mat_data['data_raw']  # shape: (frames, tx, rx, samples)
 
     num_frames, num_tx, num_rx, adc_samples = raw_data.shape
     num_x_stp = num_tx * num_rx
-    num_z_stp = num_frames
+    num_z_stp = 1  # Because radar is static; we take average over frames
 
     # Reshape to (num_x_stp, num_z_stp, adc_samples)
-    raw_data = raw_data.transpose(1, 2, 0, 3)  # shape: (tx, rx, frames, samples)
-    raw_data = raw_data.reshape(num_x_stp, num_z_stp, adc_samples)
+    raw_data = raw_data.transpose(1, 2, 0, 3)  # (tx, rx, frames, samples)
+    raw_data = raw_data.reshape(num_tx * num_rx, num_frames, adc_samples)
+    raw_data = np.mean(raw_data, axis=1, keepdims=True)  # Average over frames
 
     radar_params = {
         'sample_rate': 10e6,
@@ -111,10 +146,13 @@ def load_raw_data_2(data_path):
         'num_z_stp': num_z_stp,
         'num_tx': num_tx,
         'num_rx': num_rx,
-        'adc_samples': adc_samples
+        'adc_samples': adc_samples,
+        'num_frames': num_frames
     }
 
-    return radar_params, raw_data  
+    return radar_params, raw_data
+
+   
 
 
 def sph2cart(az, el, r):
