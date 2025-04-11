@@ -130,12 +130,12 @@ def load_raw_data(data_path):
 
     num_frames, num_tx, num_rx, adc_samples = raw_data.shape
     num_x_stp = num_tx * num_rx
-    num_z_stp = 1  # Because radar is static; we take average over frames
+    num_z_stp = 50  # Because radar is static; we take average over frames
 
     # Reshape to (num_x_stp, num_z_stp, adc_samples)
     raw_data = raw_data.transpose(1, 2, 0, 3)  # (tx, rx, frames, samples)
     raw_data = raw_data.reshape(num_tx * num_rx, num_frames, adc_samples)
-    raw_data = np.mean(raw_data, axis=1, keepdims=True)  # Average over frames
+    #raw_data = np.mean(raw_data, axis=1, keepdims=True)  # Average over frames
 
     radar_params = {
         'sample_rate': 10e6,
