@@ -117,7 +117,7 @@ class MyApp(ShowBase):
 
 if __name__ == '__main__':
     # TODO: change these to match your paths
-    home_dir = r'C:\Users\robin\Documents\EPFL\BA5\Comm_project\comm-proj-radar' # home directory path (of the project folder, full path)
+    home_dir = r'C:\\Users\\kresl\\Documents\\COM-304' # home directory path (of the project folder, full path)
     config_lua_script = os.path.join(home_dir, r'scripts\1843_config_streaming.lua') # relative path to the lua scripts for continuous it in is the home dir(ex. scripts/1843_config_streaming.lua)
 
     main(0,config_lua_script)
