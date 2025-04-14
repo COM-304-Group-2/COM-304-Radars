@@ -96,7 +96,7 @@
                     "txPhaseShifter": "0x0",
                     "freqSlopeConst_MHz_usec": 70.1500015258789,
                     "txStartTime_usec": 0,
-                    "numAdcSamples": 592,
+                    "numAdcSamples": 512,
                     "digOutSampleRate": 10000,
                     "hpfCornerFreq1": 0,
                     "hpfCornerFreq2": 0,
@@ -144,7 +144,7 @@
             "rlFrameCfg_t": {
                 "chirpEndIdx": 2,
                 "chirpStartIdx": 0,
-                "numLoops": 16,
+                "numLoops": 1,
                 "numFrames": 20,
                 "framePeriodicity_msec": 20,
                 "triggerSelect": 1,

@@ -20,9 +20,10 @@ venv/
 # Fichiers de MATLAB ou data
 *.mat
 *.csv
-*.mat
+*.bin
 
 # Fichiers de projet perso
 *.bak
 
 .idea/
+

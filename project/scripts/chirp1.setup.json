@@ -1,7 +1,7 @@
 {
     "createdByVersion": "2.1.0",
     "createdOn": "2023-10-09T10:54:20.0186601+02:00",
-    "configUsed": "/Users/thomaskemper/Documents/EPFL/BA6/Communications project/Group_2/COM-304-Radars/scripts/chirp1.mmwave.json",
+    "configUsed": "/Users/thomaskemper/Documents/EPFL/BA6/Communications project/Group_2/COM-304-Radars/project/scripts/chirp1.mmwave.json",
     "captureHardware": "DCA1000",
     "DCA1000Config": {
         "dataLoggingMode": "raw",
@@ -20,10 +20,10 @@
     },
     "capturedFiles": {
         "numFilesCollected": 1,
-        "fileBasePath": "/Users/thomaskemper/Documents/EPFL/BA6/Communications project/Group_2/COM-304-Radars/data",
+        "fileBasePath": "/Users/thomaskemper/Documents/EPFL/BA6/Communications project/Group_2/COM-304-Radars/project/data/input/data_bin",
         "files": {
-            "rawFileName": "adc_data_14_Raw_0.bin",
-            "processedFileName": "adc_data_14_Raw_0.bin",
+            "rawFileName": "data_00006_Raw_0.bin",
+            "processedFileName": "data_00006_Raw_0.bin",
             "processedFileSummary": {
                 "numZeroFillBytes": 0
             }
