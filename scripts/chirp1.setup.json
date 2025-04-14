@@ -1,7 +1,7 @@
 {
     "createdByVersion": "2.1.0",
     "createdOn": "2023-10-09T10:54:20.0186601+02:00",
-    "configUsed": "/Users/shanbhag/Documents/School/comm-proj-radars/scripts/chirp1.mmwave.json",
+    "configUsed": "C:\\\\\\\\Users\\\\\\\\kresl\\\\\\\\Documents\\\\\\\\COM-304\\\\scripts/chirp1.mmwave.json",
     "captureHardware": "DCA1000",
     "DCA1000Config": {
         "dataLoggingMode": "raw",
@@ -20,10 +20,10 @@
     },
     "capturedFiles": {
         "numFilesCollected": 1,
-        "fileBasePath": "/Users/shanbhag/Documents/School/comm-proj-radars/data",
+        "fileBasePath": "C:\\\\Users\\\\kresl\\\\Documents\\\\COM-304\\\\record\\\\",
         "files": {
-            "rawFileName": "record1_Raw_0.bin",
-            "processedFileName": "record1_Raw_0.bin",
+            "rawFileName": "hand2_Raw_0.bin",
+            "processedFileName": "hand2_Raw_0.bin",
             "processedFileSummary": {
                 "numZeroFillBytes": 0
             }

@@ -142,7 +142,7 @@
                 }
             ],
             "rlFrameCfg_t": {
-                "chirpEndIdx": 3,
+                "chirpEndIdx": 2,
                 "chirpStartIdx": 0,
                 "numLoops": 1,
                 "numFrames": 20,
