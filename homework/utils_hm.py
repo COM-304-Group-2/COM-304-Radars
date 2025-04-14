@@ -83,33 +83,12 @@ def plot_3d_cart_heatmap(ax,voxel,xaxis,yaxis,zaxis,threshold):
 
 
 def load_raw_data(data_path):
-    import scipy.io as sio
     mat_data = sio.loadmat(data_path)
-    raw_data = mat_data['data_raw']  # shape: (frames, tx, rx, samples)
-
-    num_frames, num_tx, num_rx, adc_samples = raw_data.shape
-    num_x_stp = num_tx * num_rx
-    num_z_stp = num_frames
-
-    # Reshape to (num_x_stp, num_z_stp, adc_samples)
-    raw_data = raw_data.transpose(1, 2, 0, 3)  # shape: (tx, rx, frames, samples)
-    raw_data = raw_data.reshape(num_x_stp, num_z_stp, adc_samples)
-
-    radar_params = {
-        'sample_rate': 10e6,
-        'num_samples': adc_samples,
-        'slope': 70.150e12,
-        'lm': 3e8 / 77e9,
-        'num_x_stp': num_x_stp,
-        'num_z_stp': num_z_stp,
-        'num_tx': num_tx,
-        'num_rx': num_rx,
-        'adc_samples': adc_samples
-    }
-
-    return radar_params, raw_data
-
-   
+    raw_data = mat_data['data_raw']
+    print(raw_data.shape)
+    num_x_stp, num_z_stp, adc_samples = raw_data.shape
+    radar_params = {'sample_rate': 10e6, 'num_samples': 512, 'slope':70.295e12, 'lm': 3/785., 'num_x_stp': num_x_stp, 'num_z_stp': num_z_stp, 'num_tx': 1, 'num_rx': 4, 'adc_samples': adc_samples}
+    return radar_params, raw_data   
 
 
 def sph2cart(az, el, r):
