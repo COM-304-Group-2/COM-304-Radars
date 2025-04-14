@@ -102,9 +102,10 @@ class DCA1000:
         self.config_socket = socket.socket(socket.AF_INET,
                                            socket.SOCK_DGRAM,
                                            socket.IPPROTO_UDP)
-        self.data_socket = socket.socket(socket.AF_INET,
-                                         socket.SOCK_DGRAM,
-                                         socket.IPPROTO_UDP)
+        self.data_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.data_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2**25)  # NEW: increase buffer size
+        self.data_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # NEW
+        self.config_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # NEW
 
         # Bind data socket to fpga
         self.data_socket.bind(self.data_recv)
@@ -157,7 +158,8 @@ class DCA1000:
         self.config_socket.close()
 
     def read(self, timeout=1, chirps=128, rx=4, tx=3, samples=512, IQ=2, bytes=2):
-        """ Read in a full frame via UDP """
+        """ Read in a full frame via UDP with retry support """
+
         bytes_in_packet = 1456
         bytes_in_frame = chirps * rx * tx * IQ * samples * bytes
         uint16_in_frame = bytes_in_frame // 2
@@ -165,20 +167,30 @@ class DCA1000:
         uint16_in_packet = bytes_in_packet // 2
 
         self.data_socket.settimeout(timeout)
-        ret_frame = np.zeros(uint16_in_frame, dtype=np.int16)
-        packets_received = 0
 
-        while packets_received < packets_in_frame:
-            try:
-                packet_num, byte_count, packet_data = self._read_data_packet()
-                idx = packets_received * uint16_in_packet
-                ret_frame[idx:idx + uint16_in_packet] = packet_data[:uint16_in_packet]
-                packets_received += 1
-            except socket.timeout:
-                print(f"⚠️ Timeout while receiving packet {packets_received + 1}/{packets_in_frame}")
-                return None
+        # Try up to 2 attempts to read a full frame
+        for attempt in range(2):
+            ret_frame = np.zeros(uint16_in_frame, dtype=np.int16)
+            packets_received = 0
 
-        return ret_frame
+            while packets_received < packets_in_frame:
+                try:
+                    packet_num, byte_count, packet_data = self._read_data_packet()
+                    idx = packets_received * uint16_in_packet
+                    ret_frame[idx:idx + uint16_in_packet] = packet_data[:uint16_in_packet]
+                    packets_received += 1
+                except socket.timeout:
+                    print(f"⚠️ Timeout during packet {packets_received + 1}/{packets_in_frame}, attempt {attempt + 1}")
+                    break  # retry whole frame
+
+            if packets_received == packets_in_frame:
+                return ret_frame
+            else:
+                print("⚠️ Incomplete frame, retrying...\n")
+
+        print("❌ Failed to receive complete frame after 2 attempts.")
+        return None
+
 
 
     def _send_command(self, cmd, length='0000', body='', timeout=1):
