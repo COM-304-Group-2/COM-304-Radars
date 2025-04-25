@@ -1,5 +1,5 @@
-from numpy.lib.function_base import unwrap
-from mmwave.dataloader import DCA1000
+#from numpy import unwrap
+from streaming.mmwave.dataloader.adc_modified import DCA1000
 import numpy as np
 import time
 from scipy.fftpack import fft
@@ -16,7 +16,12 @@ def producer_real_time_1843(q, index, lua_file):
     This function reads data from the ethernet port connected to the radar, reformats the data, and pushes the range fft to q.
     Note: This function can be called in parallel with other functions (see realtime_streaming.py for more details). 
     """
-    num_rx, num_tx, samples_per_chirp, periodicity, num_frames, chirp_loops, data_rate, freq_plot_len, range_plot_len = utility.read_radar_params(lua_file) 
+    #num_rx, num_tx, samples_per_chirp, periodicity, num_frames, chirp_loops, data_rate, freq_plot_len, range_plot_len = utility.read_radar_params(lua_file)
+    num_rx = 4
+    num_tx = 3
+    samples_per_chirp = 576
+    chirp_loops = 16
+
     dca = DCA1000()
     # chirp configurations based on your config lua file
     dca.sensor_config(chirps=num_tx*chirp_loops, chirp_loops=1, num_rx=num_rx, num_samples=samples_per_chirp)
