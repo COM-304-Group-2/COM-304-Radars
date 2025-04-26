@@ -102,9 +102,10 @@ class DCA1000:
         self.config_socket = socket.socket(socket.AF_INET,
                                            socket.SOCK_DGRAM,
                                            socket.IPPROTO_UDP)
-        self.data_socket = socket.socket(socket.AF_INET,
-                                         socket.SOCK_DGRAM,
-                                         socket.IPPROTO_UDP)
+        self.data_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.data_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2**25)  # NEW: increase buffer size
+        self.data_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # NEW
+        self.config_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # NEW
 
         # Bind data socket to fpga
         self.data_socket.bind(self.data_recv)
@@ -142,7 +143,7 @@ class DCA1000:
         # 5a a5 03 00 06 00 01 02 01 02 03 1e aa ee
         print(self._send_command(CMD.CONFIG_FPGA_GEN_CMD_CODE, '0600', 'c005350c0000'))
 
-        # CONFIG_PACKET_DATA_CMD_CODE 
+        # CONFIG_PACKET_DATA_CMD_CODE
         # 5a a5 0b 00 06 00 c0 05 35 0c 00 00 aa ee
         print(self._send_command(CMD.CONFIG_PACKET_DATA_CMD_CODE, '0600', 'c005350c0000'))
 
@@ -156,65 +157,41 @@ class DCA1000:
         self.data_socket.close()
         self.config_socket.close()
 
-    def read(self, timeout=1, chirps=128, rx=4, tx=3, samples=128, IQ=2, bytes=2):
-        """ Read in a single packet via UDP
+    def read(self, timeout=1, chirps=128, rx=4, tx=3, samples=512, IQ=2, bytes=2):
+        """ Read in a full frame via UDP with retry support """
 
-        Args:
-            timeout (float): Time to wait for packet before moving on
-            chirps (int): Number of chirps inside a frame
-            rx (int): Number of receivers
-            tx (int): Number of transmitteres
-            samples (int): Number of samples inside a chirp
-            IQ (int): Only I channel (= 1) or both I and Q channels (= 2)
-            bytes (int): bytes in each sample (usually = 2)
-
-        Returns:
-            Full frame as array if successful, else None
-
-        """
-        # STATIC
         bytes_in_packet = 1456
-        
-        # DYNAMIC
-        bytes_in_frame = (chirps * rx * tx * IQ * samples * bytes)
-        bytes_in_frame_clipped = int(np.ceil(bytes_in_frame / bytes_in_packet)) * bytes_in_packet
-        packets_in_frame = bytes_in_frame / bytes_in_packet
-        packets_in_frame_clipped = bytes_in_frame // bytes_in_packet
-        uint16_in_packet = bytes_in_packet // 2
+        bytes_in_frame = chirps * rx * tx * IQ * samples * bytes
         uint16_in_frame = bytes_in_frame // 2
-        # Configure
+        packets_in_frame = bytes_in_frame // bytes_in_packet
+        uint16_in_packet = bytes_in_packet // 2
+
         self.data_socket.settimeout(timeout)
 
-        # Frame buffer
-        ret_frame = np.zeros(uint16_in_frame, dtype=np.int16)
+        # Try up to 2 attempts to read a full frame
+        for attempt in range(2):
+            ret_frame = np.zeros(uint16_in_frame, dtype=np.int16)
+            packets_received = 0
 
-        # Wait for start of next frame
-        while True:
-            packet_num, byte_count, packet_data = self._read_data_packet()
-            if byte_count % bytes_in_frame_clipped == 0:
-                packets_read = 1
-                # print(packet_data.shape)
-                ret_frame = packet_data[0:128]
+            while packets_received < packets_in_frame:
+                try:
+                    packet_num, byte_count, packet_data = self._read_data_packet()
+                    idx = packets_received * uint16_in_packet
+                    ret_frame[idx:idx + uint16_in_packet] = packet_data[:uint16_in_packet]
+                    packets_received += 1
+                except socket.timeout:
+                    print(f"⚠️ Timeout during packet {packets_received + 1}/{packets_in_frame}, attempt {attempt + 1}")
+                    break  # retry whole frame
+
+            if packets_received == packets_in_frame:
                 return ret_frame
-                break
+            else:
+                print("⚠️ Incomplete frame, retrying...\n")
 
-        # Read in the rest of the frame            
-        while True:
-            packet_num, byte_count, packet_data = self._read_data_packet()
-            packets_read += 1
+        print("❌ Failed to receive complete frame after 2 attempts.")
+        return None
 
-            if byte_count % bytes_in_frame_clipped == 0:
-                self.lost_packets = packets_in_frame_clipped - packets_read
-                return ret_frame
 
-            curr_idx = ((packet_num - 1) % packets_in_frame_clipped)
-            try:
-                ret_frame[curr_idx * uint16_in_packet:(curr_idx + 1) * uint16_in_packet] = packet_data
-            except:
-                pass
-
-            if packets_read > packets_in_frame_clipped:
-                packets_read = 0
 
     def _send_command(self, cmd, length='0000', body='', timeout=1):
         """Helper function to send a single commmand to the FPGA

@@ -100,7 +100,7 @@ class DCA1000:
         self.frame_ready = False
 
         # Will be removed in a later release
-        self.sensor_config(128, 3, 4, 128)
+        self.sensor_config(3, 16, 4, 576)
 
     def sensor_config(self, chirps, chirp_loops, num_rx, num_samples, iq=2, num_bytes=2):
         """Adjusts the size of the frame returned from realtime reading.

@@ -1,49 +1,101 @@
-#from numpy import unwrap
-from streaming.mmwave.dataloader.adc_modified import DCA1000
 import numpy as np
+import queue
 import time
-from scipy.fftpack import fft
-import processing.utility as utility
+from scipy.ndimage import median_filter
+from streaming.mmwave.dataloader.adc_modified import DCA1000
+import utils
+
+
+def beamform_2d(beat_freq_data, phi, theta, x_locs, z_locs, r_idxs, radar_params):
+    lm = radar_params['lm']
+    num_phi, num_theta, num_r = len(phi), len(theta), len(r_idxs)
+    sph_pwr = np.zeros((num_phi, num_theta, num_r), dtype=np.complex64)
+
+    # Flatten antenna grid
+    #x_grid, z_grid = np.meshgrid(x_locs.flatten(), z_locs.flatten(), indexing='ij')
+    #x_flat = x_grid.ravel()
+    #z_flat = z_grid.ravel()
+
+    for i, angle_phi in enumerate(phi):
+        for j, angle_theta in enumerate(theta):
+            proj = x_locs * np.sin(angle_theta) * np.cos(angle_phi)
+            phase_shifts = np.exp((1j * 2 * np.pi / lm) * proj)
+
+            beamformed_signal = beat_freq_data[:, r_idxs] * phase_shifts[:, :]
+
+            sph_pwr[i, j, :] = np.abs(np.sum(beamformed_signal, axis=0))
+
+    return sph_pwr
+
 
 def producer_real_time_1843(q, index, lua_file):
-    """
-    This function is one of the processed called in realtime_streaming.py.
-    Paramters:
-    - q: Queue to push new data
-    - index: dummy index
-    - lua_file: lua file containing radar chirp paramters
+    num_tx, num_rx, adc_samples = 3, 4, 576
+    chirp_loops = 16  # mmWave studio sends 3 chirps per TX
+    slope, sample_rate, c = 70.150e6, 10e6, 3e8
+    lm = c / 77e9
 
-    This function reads data from the ethernet port connected to the radar, reformats the data, and pushes the range fft to q.
-    Note: This function can be called in parallel with other functions (see realtime_streaming.py for more details). 
-    """
-    #num_rx, num_tx, samples_per_chirp, periodicity, num_frames, chirp_loops, data_rate, freq_plot_len, range_plot_len = utility.read_radar_params(lua_file)
-    num_rx = 4
-    num_tx = 3
-    samples_per_chirp = 576
-    chirp_loops = 16
+    r_idxs = np.arange(0, 80)
+    phi = np.deg2rad(np.arange(0, 180, 1))
+    theta = np.deg2rad(np.arange(70, 110, 1))
 
+    radar_params = {
+        "sample_rate": sample_rate,
+        "num_samples": adc_samples,
+        "slope": slope,
+        "lm": lm,
+        "num_z_stp": num_tx,
+        "num_rx": num_rx,
+        "adc_samples": adc_samples
+    }
+
+    num_virtual_ant = num_tx * num_rx
+    x_locs, z_locs, _ = utils.get_ant_pos_2d(num_virtual_ant, num_tx, num_rx)
+
+    print("Starting DCA1000...")
     dca = DCA1000()
-    # chirp configurations based on your config lua file
-    dca.sensor_config(chirps=num_tx*chirp_loops, chirp_loops=1, num_rx=num_rx, num_samples=samples_per_chirp)
-    prev_time = time.time()
-    while True:
-        # here we actually reads from the ethernet port
-        adc_data = dca.read()
-        # reorganize the interleaved data into channels corresponding to (tx*chirp loops, rx, adc samples)
-        # number of frames is 1 because we are always reading the 
-        org_data = dca.organize(raw_frame=adc_data, num_chirps=num_tx*chirp_loops,
-        num_rx=num_rx, num_samples=samples_per_chirp, num_frames=1, model='1843')
-        x = 0
-        
-        # here we are just processing the range fft to plot later on
-        x = np.sum(org_data, axis=(0, 1))
-        x -= np.mean(x, axis=-1, keepdims=True)
-        fx = fft(x, axis=-1)
-        afx = np.squeeze(np.abs(fx))
+    print("Reading data...")
 
-        now = time.time()
-        # So as to not overload the upating, we will just refresh the data every 0.1 seconds
-        if now - prev_time > 0.1:
-            # put the tuple containing the data's name and the data into the queue that will be sent to plotting (see realtime_streaming.py)
-            q.put(["rfft", afx])
-            prev_time = now
+    try:
+        while True:
+            raw = dca.read(timeout=0.5, chirps=chirp_loops, rx=num_rx, tx=num_tx, samples=adc_samples)
+            if raw is None:
+                continue
+            if not q.empty():
+                continue
+
+            # shape = (chirp_loops, tx, rx, samples)
+            raw = dca.organize(raw, chirp_loops, num_tx, num_rx, adc_samples)
+            adc_windowed = raw * np.hamming(adc_samples)
+
+            # print("adc_windowed shape: ", adc_windowed.shape)
+
+            reshaped = adc_windowed.reshape(num_tx, chirp_loops, num_rx, adc_samples)
+
+            # print("reshaped adc_windowed shape: ", reshaped.shape)
+
+            # ✅ Transpose to (tx, rx, chirp, sample) and reshape to (12, 512)
+            beat_freq_data = reshaped.transpose(0, 2, 1, 3)
+            beat_freq_data = beat_freq_data[:,:,0,:]
+            beat_freq_data = beat_freq_data.reshape(12, 576)
+
+            # print("beat_freq_data shape: ", beat_freq_data.shape)
+
+            range_fft = np.fft.fft(beat_freq_data, axis=-1)
+
+            bf_output = beamform_2d(range_fft, phi, theta, x_locs, z_locs, r_idxs, radar_params)
+            bf_output = np.abs(bf_output)
+            bf_output = median_filter(bf_output, size=(1, 1, 1))
+
+            to_plot = np.sum(bf_output, axis=1)
+            to_plot /= np.max(to_plot)
+            to_plot = to_plot ** 2
+
+            try:
+                q.put_nowait(("bev", (phi, r_idxs, to_plot)))
+            except queue.Full:
+                continue
+
+    except KeyboardInterrupt:
+        print("🛑 Stopped by user.")
+    finally:
+        dca.close()

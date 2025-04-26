@@ -450,3 +450,7 @@ class DCA1000:
         """Dump the current configuration to a JSON file"""
         with open(outfile, "w") as f:
             json.dump(self.config._config, f, indent=4, ensure_ascii=False)
+
+    def get_socket_data(self, sock_type: str) -> socket.socket:
+        """Get the socket object for the given type"""
+        return self.socks.get(sock_type.lower())
