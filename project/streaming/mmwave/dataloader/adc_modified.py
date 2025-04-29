@@ -267,10 +267,15 @@ class DCA1000:
             ndarray: Reformatted frame of raw data of shape (num_chirps, num_rx, num_samples)
 
         """
-        ret = np.zeros(len(raw_frame) // 2, dtype=complex)
+        num_complex_samples = len(raw_frame) // 2
+        ret = np.zeros(num_complex_samples, dtype=complex)
 
-        # Separate IQ data
-        # print(raw_frame.shape)
-        ret[0::2] = raw_frame[0::4] + 1j * raw_frame[2::4]
-        ret[1::2] = raw_frame[1::4] + 1j * raw_frame[3::4]
-        return ret.reshape((num_chirps * num_tx, num_rx, num_samples))
+        # Non-interleaved: first half is I, second half is Q
+        half_point = len(raw_frame) // 2
+        I_data = raw_frame[:half_point]
+        Q_data = raw_frame[half_point:]
+
+        ret.real = I_data
+        ret.imag = Q_data
+
+        return ret.reshape(num_chirps, num_tx, num_rx, num_samples)
