@@ -29,12 +29,12 @@ def beamform_2d(beat_freq_data, phi, theta, x_locs, z_locs, r_idxs, radar_params
 
 
 def producer_real_time_1843(q, index, lua_file):
-    num_tx, num_rx, adc_samples = 3, 4, 576
-    chirp_loops = 16  # mmWave studio sends 3 chirps per TX
+    num_tx, num_rx, adc_samples = 3, 4, 512
+    chirp_loops = 1  # mmWave studio sends 3 chirps per TX
     slope, sample_rate, c = 70.150e6, 10e6, 3e8
     lm = c / 77e9
 
-    r_idxs = np.arange(0, 80)
+    r_idxs = np.arange(0, 120)
     phi = np.deg2rad(np.arange(0, 180, 1))
     theta = np.deg2rad(np.arange(70, 110, 1))
 
@@ -63,22 +63,15 @@ def producer_real_time_1843(q, index, lua_file):
             if not q.empty():
                 continue
 
-            # shape = (chirp_loops, tx, rx, samples)
-            raw = dca.organize(raw, chirp_loops, num_tx, num_rx, adc_samples)
+            raw = dca.organize(raw, chirp_loops, num_tx, num_rx, adc_samples) # shape = (chirp_loops*tx, rx, samples)
+
             adc_windowed = raw * np.hamming(adc_samples)
 
-            # print("adc_windowed shape: ", adc_windowed.shape)
-
-            reshaped = adc_windowed.reshape(num_tx, chirp_loops, num_rx, adc_samples)
-
-            # print("reshaped adc_windowed shape: ", reshaped.shape)
-
             # ✅ Transpose to (tx, rx, chirp, sample) and reshape to (12, 512)
-            beat_freq_data = reshaped.transpose(0, 2, 1, 3)
+            beat_freq_data = adc_windowed.reshape(chirp_loops, num_tx, num_rx, adc_samples)
+            beat_freq_data = beat_freq_data.transpose(1, 2, 0, 3)
             beat_freq_data = beat_freq_data[:,:,0,:]
-            beat_freq_data = beat_freq_data.reshape(12, 576)
-
-            # print("beat_freq_data shape: ", beat_freq_data.shape)
+            beat_freq_data = beat_freq_data.reshape(12, 512)
 
             range_fft = np.fft.fft(beat_freq_data, axis=-1)
 
