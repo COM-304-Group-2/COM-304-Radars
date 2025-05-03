@@ -125,6 +125,10 @@ dependencies:
       - pure-eval==0.2.3
       - pycparser==2.22
       - pygments==2.19.1
+      - pyqt5==5.15.11
+      - pyqt5-qt5==5.15.16
+      - pyqt5-sip==12.17.0
+      - pyserial==3.5
       - python-json-logger==3.3.0
       - pyyaml==6.0.2
       - pyzmq==26.4.0
@@ -134,7 +138,6 @@ dependencies:
       - rfc3986-validator==0.1.1
       - rpds-py==0.24.0
       - send2trash==1.8.3
-      - serial==0.0.97
       - sniffio==1.3.1
       - soupsieve==2.7
       - stack-data==0.6.3
