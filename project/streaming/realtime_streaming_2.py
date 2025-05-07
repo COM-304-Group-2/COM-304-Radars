@@ -32,7 +32,7 @@ class MyApp(ShowBase):
         self.q = queue
         self.latest_msg = None
         self.phi = np.linspace(0, np.pi, 180)
-        self.r_idxs = np.arange(0, 140)
+        self.r_idxs = np.arange(0, 120)
         self.bev_map = np.zeros((len(self.phi), len(self.r_idxs)))
 
         plt.ion()

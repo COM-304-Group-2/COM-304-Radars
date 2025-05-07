@@ -31,14 +31,8 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
     """
 
     # Radar parameters
-    sample_rate = radar_params["sample_rate"]
-    num_samples = radar_params["num_samples"]
-    slope = radar_params["slope"]
     lm = radar_params["lm"]
-    num_z_stp = radar_params["num_z_stp"]
-    num_tx = radar_params["num_tx"]
-    num_rx = radar_params["num_rx"]
-    adc_samples = radar_params["adc_samples"]
+
 
     # Convert angles to radians
     phi = np.arange(phi_s, phi_e, phi_res) * np.pi / 180
@@ -47,6 +41,7 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
     num_phi = len(phi)
 
     theta_grid, phi_grid = np.meshgrid(np.sin(theta), np.cos(phi))
+
     angle_grid = theta_grid * phi_grid
     angles = x_locs * angle_grid[:,:, np.newaxis]
     phase_shifts = np.exp((1j * 2 * np.pi / lm) * angles)
@@ -56,13 +51,14 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
 
     r_idx, d_idx = np.nonzero(dets)
 
-    for r, d in zip(r_idx, d_idx):
+    for d, r in zip(r_idx, d_idx):
 
-        beat = beat_freq_data[:, r, d]         # (N_ant,)
+        beat = beat_freq_data[:, d, r]
         beamformed_signal = beat[np.newaxis, np.newaxis, :] * phase_shifts
-        sph_pwr[:, :, r] = np.abs(np.sum(beamformed_signal, axis=-1))
+        #sph_pwr[:, :, r] = np.maximum(sph_pwr[:, :, r], np.abs(np.sum(beamformed_signal, axis=-1)))
+        sph_pwr[:, :, r] += np.abs(np.sum(beamformed_signal, axis=-1))
 
-    return sph_pwr, phi, theta
+    return sph_pwr
 
 
 def cfar_ca_2d(power_map,
@@ -147,10 +143,10 @@ def process_frame(raw_data, cfar_params):
     N_ant, N_adc, N_chirps = raw_data.shape
 
     # 1) Range FFT
-    rng_ffted = np.fft.fft(raw_data, axis=2)   # → (N_ant, N_adc, N_R=N_chirps)
+    #rng_ffted = np.fft.fft(raw_data, axis=2)   # → (N_ant, N_adc, N_R=N_chirps)
 
     # 2) Doppler FFT
-    rd_cube = np.fft.fft(rng_ffted, axis=1)    # → (N_ant, N_D=N_adc, N_R=N_chirps)
+    rd_cube = np.fft.fft(raw_data, axis=1)    # → (N_ant, N_D=N_adc, N_R=N_chirps)
 
     # 3) Build RD magnitude for CFAR (average across antennas)
     rd_map = np.mean(np.abs(rd_cube)**2, axis=0)  # shape (N_R, N_D)
@@ -195,6 +191,9 @@ def producer_real_time_1843(q, index, lua_file):
     dca = DCA1000()
     print("Reading data...")
 
+    last_frame = np.zeros((12, 16, 592), dtype=np.complex64)
+    last_beam = np.zeros((180, 40, 120))
+
     try:
         while True:
             raw = dca.read(timeout=0.5, chirps=chirp_loops, rx=num_rx, tx=num_tx, samples=adc_samples)
@@ -210,22 +209,34 @@ def producer_real_time_1843(q, index, lua_file):
             # ✅ Transpose to (tx, rx, chirp, sample) and reshape to (12, 512)
             beat_freq_data = adc_windowed.reshape(chirp_loops, num_tx, num_rx, adc_samples)
             beat_freq_data = beat_freq_data.transpose(1, 2, 0, 3)
-            beat_freq_data = beat_freq_data[:,:,:,:]
-            beat_freq_data = beat_freq_data.reshape(12, 16, 576)
-
-            dets = process_frame(beat_freq_data[:, :, r_idxs], {
-                "num_train_r": 10,
-                "num_train_d": 8,
-                "num_guard_r": 2,
-                "num_guard_d": 2,
-                "threshold_scale": 1e-3
-            })
+            beat_freq_data = beat_freq_data.reshape(12, 16, 592)
 
             range_fft = np.fft.fft(beat_freq_data, axis=-1)
+            last_frame_fft = np.fft.fft(last_frame, axis=-1)
 
-            bf_output, phi, theta = beamform_2d_s(range_fft[:,:,r_idxs], 0, 180, 1, 70, 110, 1, x_locs[:,0], z_locs, np.arange(0, 140), radar_params, 0, dets)
+            range_fft_s = range_fft - last_frame_fft
+            last_frame = beat_freq_data
+
+            dets = process_frame(range_fft_s[:, :, r_idxs], {
+                "num_train_r": 12,
+                "num_train_d": 10,
+                "num_guard_r": 6,
+                "num_guard_d": 6,
+                "threshold_scale": 1e-7
+            })
+
+            #range_fft = np.fft.fft(beat_freq_data, axis=-1)
+
+            bf_output = beamform_2d_s(range_fft_s[:,:,r_idxs], 0, 180, 1, 70, 110, 1, x_locs[:,0], z_locs, r_idxs, radar_params, 0, dets)
+
             bf_output = np.abs(bf_output)
             bf_output = median_filter(bf_output, size=(1, 1, 1))
+
+            #bf_output_s = bf_output - last_beam
+            #last_beam = bf_output
+
+            #threshold = np.percentile(bf_output, 98.2)
+            #bf_output = np.where(bf_output > threshold, bf_output, 0)
 
             to_plot = np.sum(bf_output, axis=1)
             to_plot /= np.max(to_plot)
