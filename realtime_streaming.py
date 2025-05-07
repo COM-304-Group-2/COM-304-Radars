@@ -56,14 +56,18 @@ class MyApp(ShowBase):
             pass
 
         if self.latest_msg:
-            self.phi, self.r_idxs, self.bev_map = self.latest_msg
+            tracks = self.latest_msg
             self.ax.clear()
             self._configure_ax()
-            plot_2d_heatmap(self.ax, self.bev_map, self.phi, self.r_idxs, vmin=0, vmax=0.1)
+
+            for track in tracks:
+                x, y = track
+                self.ax.scatter(x, y, c='red', marker='x')
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
 
         return Task.cont
+
 
 def main(exp_num, lua_file):
     q_main = Queue(maxsize=1)  # ❗️ Only keep latest

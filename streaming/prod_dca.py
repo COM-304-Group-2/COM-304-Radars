@@ -5,6 +5,10 @@ from scipy.ndimage import median_filter
 from streaming.mmwave.dataloader.adc_modified import DCA1000
 from streaming import utils
 
+from gtrack.tracker import Tracker
+
+tracker = Tracker(dt=0.1, process_noise=0.1, measurement_noise=1.0)
+
 def beamform_2d(beat_freq_data, phi, theta, x_locs, z_locs, r_idxs, radar_params):
     lm = radar_params['lm']
     num_phi, num_theta, num_r = len(phi), len(theta), len(r_idxs)
@@ -56,43 +60,23 @@ def producer_real_time_1843(q, index, lua_file):
 
     try:
         while True:
-            raw = dca.read(timeout=0.5, chirps=chirp_loops, rx=num_rx, tx=num_tx, samples=adc_samples)
+            raw = dca.read(timeout=0.5)
             if raw is None:
                 continue
-            if not q.empty():
-                continue
+            beat_freq_data = np.fft.fft(raw, axis=-1)
+            power_map = np.abs(beat_freq_data) ** 2
+            detections = np.argwhere(power_map > 0.05)  # Threshold
 
-            # shape = (chirp_loops, tx, rx, samples)
-            raw = dca.organize(raw, chirp_loops, num_tx, num_rx, adc_samples)
-            adc_windowed = raw * np.hamming(adc_samples)
-
-            #print("adc_windowed shape: ", adc_windowed.shape)
-
-            reshaped = adc_windowed.reshape(num_tx, chirp_loops, num_rx, adc_samples)
-
-            #print("reshaped adc_windowed shape: ", reshaped.shape)
-
-            # ✅ Transpose to (tx, rx, chirp, sample) and reshape to (12, 512)
-            beat_freq_data = reshaped.transpose(0, 2, 1, 3).reshape(num_virtual_ant, adc_samples)
-
-            #print("beat_freq_data shape: ", beat_freq_data.shape)
-
-            range_fft = np.fft.fft(beat_freq_data, axis=-1)
-
-            bf_output = beamform_2d(range_fft, phi, theta, x_locs, z_locs, r_idxs, radar_params)
-            bf_output = np.abs(bf_output)
-            bf_output = median_filter(bf_output, size=(1, 1, 1))
-
-            to_plot = np.sum(bf_output, axis=1)
-            to_plot /= np.max(to_plot)
-            to_plot = to_plot ** 2
+            tracks = tracker.update_tracks(detections)
+            track_positions = [(t['position'][0], t['position'][1]) for t in tracks]
 
             try:
-                q.put_nowait(("bev", (phi, r_idxs, to_plot)))
+                q.put_nowait(("bev", track_positions))
             except queue.Full:
                 continue
-
     except KeyboardInterrupt:
         print("🛑 Stopped by user.")
     finally:
         dca.close()
+
+    
