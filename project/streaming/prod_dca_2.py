@@ -7,8 +7,6 @@ import utils
 from scipy.signal import convolve2d
 from sklearn.cluster import DBSCAN
 
-from project.beamforming import phi_rad_2d
-
 
 ################# Change the values based on how much of the azimuth angles you want to see and the resolution ##################
 # Define field of view in degrees that you want to process in theta, phi and range bins
