@@ -5,6 +5,9 @@ from scipy.ndimage import median_filter
 from streaming.mmwave.dataloader.adc_modified import DCA1000
 import utils
 from scipy.signal import convolve2d
+from sklearn.cluster import DBSCAN
+
+from project.beamforming import phi_rad_2d
 
 
 ################# Change the values based on how much of the azimuth angles you want to see and the resolution ##################
@@ -241,9 +244,30 @@ def producer_real_time_1843(q, index, lua_file):
             to_plot = np.sum(bf_output, axis=1)
             to_plot /= np.max(to_plot)
             to_plot = to_plot ** 2
+            output_top = to_plot
+
+
+            # DBSCAN clustering
+            # Build full coordinate grid
+            phi_rad_2d, r_idxs_2d = np.meshgrid(phi, r_idxs, indexing='ij')  # shape: (180, 140)
+
+            x_coords_m = np.cos(phi_rad_2d) * r_idxs_2d  # shape: (180, 140)
+            z_coords_m = np.sin(phi_rad_2d) * r_idxs_2d  # shape: (180, 140)
+
+            # Flatten for DBSCAN
+            points = np.stack([x_coords_m.ravel(), z_coords_m.ravel()], axis=1)
+            powers = output_top.ravel()
+
+            # Optional: keep only high-power points
+            threshold = np.percentile(powers, 96)
+            valid_mask = powers > threshold
+            points_thresh = points[valid_mask]
+
+            # --- DBSCAN ---
+            db = DBSCAN(eps=2, min_samples=20).fit(points_thresh)
 
             try:
-                q.put_nowait(("bev", (phi, r_idxs, to_plot)))
+                q.put_nowait(("bev", (phi, r_idxs, to_plot, db, points_thresh)))
             except queue.Full:
                 continue
 
