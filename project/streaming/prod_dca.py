@@ -55,6 +55,8 @@ def producer_real_time_1843(q, index, lua_file):
     dca = DCA1000()
     print("Reading data...")
 
+    last_frame = np.zeros((12, 512), dtype=np.complex64)
+
     try:
         while True:
             raw = dca.read(timeout=0.5, chirps=chirp_loops, rx=num_rx, tx=num_tx, samples=adc_samples)
@@ -73,11 +75,20 @@ def producer_real_time_1843(q, index, lua_file):
             beat_freq_data = beat_freq_data[:,:,0,:]
             beat_freq_data = beat_freq_data.reshape(12, 512)
 
+
             range_fft = np.fft.fft(beat_freq_data, axis=-1)
+            last_frame_fft = np.fft.fft(last_frame, axis=-1)
+
+            #range_fft_s = range_fft - last_frame_fft
+            #last_frame = beat_freq_data
 
             bf_output = beamform_2d(range_fft, phi, theta, x_locs, z_locs, r_idxs, radar_params)
+
             bf_output = np.abs(bf_output)
             bf_output = median_filter(bf_output, size=(1, 1, 1))
+
+            #threshold = np.percentile(bf_output, 99)
+            #bf_output = np.where(bf_output > threshold, bf_output, 0)
 
             to_plot = np.sum(bf_output, axis=1)
             to_plot /= np.max(to_plot)
