@@ -47,7 +47,10 @@ class MyApp(ShowBase):
         self.x_coords_m = np.cos(self.phi_rad_2d) * self.r_idxs_2d  # shape: (180, 140)
         self.z_coords_m = np.sin(self.phi_rad_2d) * self.r_idxs_2d # shape: (180, 140)
 
-        self.fig_2 = plt.figure(figsize=(6, 6))
+        #self.x_coords_m = np.linspace(-180, 180, 1)
+        #self.z_coords_m = np.linspace(0, 140, 1)
+
+        self.fig_2 = plt.figure(figsize=(6, 4))
         self.ax_2 = self.fig_2.add_subplot(111)
         self._configure_ax_2()
 
