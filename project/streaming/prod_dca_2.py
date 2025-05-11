@@ -8,6 +8,7 @@ from scipy.signal import convolve2d
 from sklearn.cluster import DBSCAN
 
 
+
 ################# Change the values based on how much of the azimuth angles you want to see and the resolution ##################
 # Define field of view in degrees that you want to process in theta, phi and range bins
 def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta_res, x_locs, z_locs, r_idxs, radar_params, index, dets):
@@ -226,24 +227,15 @@ def producer_real_time_1843(q, index, lua_file):
                 "threshold_scale": 1e-7
             })
 
-            #range_fft = np.fft.fft(beat_freq_data, axis=-1)
-
             bf_output = beamform_2d_s(range_fft_s[:,:,r_idxs], 0, 180, 1, 70, 110, 1, x_locs[:,0], z_locs, r_idxs, radar_params, 0, dets)
 
             bf_output = np.abs(bf_output)
             bf_output = median_filter(bf_output, size=(1, 1, 1))
 
-            #bf_output_s = bf_output - last_beam
-            #last_beam = bf_output
-
-            #threshold = np.percentile(bf_output, 98.2)
-            #bf_output = np.where(bf_output > threshold, bf_output, 0)
-
             to_plot = np.sum(bf_output, axis=1)
             to_plot /= np.max(to_plot)
             to_plot = to_plot ** 2
             output_top = to_plot
-
 
             # DBSCAN clustering
             # Build full coordinate grid
@@ -257,12 +249,12 @@ def producer_real_time_1843(q, index, lua_file):
             powers = output_top.ravel()
 
             # Optional: keep only high-power points
-            threshold = np.percentile(powers, 96)
+            threshold = np.percentile(powers, 98)
             valid_mask = powers > threshold
             points_thresh = points[valid_mask]
 
             # --- DBSCAN ---
-            db = DBSCAN(eps=2, min_samples=20).fit(points_thresh)
+            db = DBSCAN(eps=3, min_samples=10).fit(points_thresh)
 
             try:
                 q.put_nowait(("bev", (phi, r_idxs, to_plot, db, points_thresh)))
