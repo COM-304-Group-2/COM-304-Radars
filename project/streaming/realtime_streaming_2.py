@@ -57,6 +57,12 @@ class MyApp(ShowBase):
         self.db = None
         self.points_thresh = None
 
+        self.last_frame_time = time.time()
+        self.frame_counter = 0
+        self.fps = 0
+        self.last_fps_time = time.time()
+
+        self.fps_text = self.ax.text(0.02, 1.02, "", transform=self.ax.transAxes, fontsize=10, color='blue')
 
         plt.show(block=False)
 
@@ -104,6 +110,17 @@ class MyApp(ShowBase):
 
             self.ax_2.legend()
             self.ax_2.grid(True)
+
+            # FPS tracking
+            current_time = time.time()
+            self.frame_counter += 1
+            if current_time - self.last_fps_time >= 1.0:  # Every 1 second
+                self.fps = self.frame_counter / (current_time - self.last_fps_time)
+                self.last_fps_time = current_time
+                self.frame_counter = 0
+
+            # Update FPS text on the polar plot
+            self.fps_text.set_text(f"FPS: {self.fps:.2f}")
 
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
