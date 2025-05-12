@@ -213,6 +213,9 @@ def producer_real_time_1843(q, index, lua_file):
             beat_freq_data = beat_freq_data.transpose(1, 2, 0, 3)
             beat_freq_data = beat_freq_data.reshape(12, 16, 592)
 
+            #
+            beat_freq_data[:,:, 0:10] = 0
+
             range_fft = np.fft.fft(beat_freq_data, axis=-1)
             last_frame_fft = np.fft.fft(last_frame, axis=-1)
 
