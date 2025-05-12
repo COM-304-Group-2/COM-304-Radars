@@ -57,8 +57,8 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
 
         beat = beat_freq_data[:, d, r]
         beamformed_signal = beat[np.newaxis, np.newaxis, :] * phase_shifts
-        #sph_pwr[:, :, r] = np.maximum(sph_pwr[:, :, r], np.abs(np.sum(beamformed_signal, axis=-1)))
-        sph_pwr[:, :, r] += np.abs(np.sum(beamformed_signal, axis=-1))
+        sph_pwr[:, :, r] = np.maximum(sph_pwr[:, :, r], np.abs(np.sum(beamformed_signal, axis=-1)))
+        #sph_pwr[:, :, r] += np.abs(np.sum(beamformed_signal, axis=-1))
 
     return sph_pwr
 
