@@ -38,26 +38,21 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
 
     # Convert angles to radians
     phi = np.arange(phi_s, phi_e, phi_res) * np.pi / 180
-    theta = np.arange(theta_s, theta_e, theta_res) * np.pi / 180
-    num_theta = len(theta)
     num_phi = len(phi)
 
-    theta_grid, phi_grid = np.meshgrid(np.sin(theta), np.cos(phi))
-
-    angle_grid = theta_grid * phi_grid
-    angles = x_locs * angle_grid[:,:, np.newaxis]
+    angles = x_locs * np.cos(phi[:, np.newaxis])
     phase_shifts = np.exp((1j * 2 * np.pi / lm) * angles)
 
     # Initialize output
-    sph_pwr = np.zeros((num_phi, num_theta, r_idxs.shape[0]), dtype=np.complex64)
+    sph_pwr = np.zeros((num_phi, r_idxs.shape[0]), dtype=np.complex64)
 
     r_idx, d_idx = np.nonzero(dets)
 
     for d, r in zip(r_idx, d_idx):
 
         beat = beat_freq_data[:, d, r]
-        beamformed_signal = beat[np.newaxis, np.newaxis, :] * phase_shifts
-        sph_pwr[:, :, r] = np.maximum(sph_pwr[:, :, r], np.abs(np.sum(beamformed_signal, axis=-1)))
+        beamformed_signal = beat[np.newaxis, :] * phase_shifts
+        sph_pwr[:, r] = np.maximum(sph_pwr[:, r], np.abs(np.sum(beamformed_signal, axis=-1)))
         #sph_pwr[:, :, r] += np.abs(np.sum(beamformed_signal, axis=-1))
 
     return sph_pwr
@@ -172,7 +167,7 @@ def producer_real_time_1843(q, index, lua_file):
     slope, sample_rate, c = 70.150e6, 10e6, 3e8
     lm = c / 77e9
 
-    r_idxs = np.arange(0, 120)
+    r_idxs = np.arange(0, 50)
     phi = np.deg2rad(np.arange(0, 180, 1))
     theta = np.deg2rad(np.arange(70, 110, 1))
 
@@ -194,7 +189,7 @@ def producer_real_time_1843(q, index, lua_file):
     print("Reading data...")
 
     last_frame = np.zeros((12, 16, 592), dtype=np.complex64)
-    last_beam = np.zeros((180, 40, 120))
+    #last_beam = np.zeros((180, 40, 120))
 
     try:
         while True:
@@ -214,12 +209,13 @@ def producer_real_time_1843(q, index, lua_file):
             beat_freq_data = beat_freq_data.reshape(12, 16, 592)
 
             #
-            beat_freq_data[:,:, 0:10] = 0
+            #beat_freq_data[:,:, 0:15] = 0
 
             range_fft = np.fft.fft(beat_freq_data, axis=-1)
             last_frame_fft = np.fft.fft(last_frame, axis=-1)
 
             range_fft_s = range_fft - last_frame_fft
+            range_fft_s[:,:, 0:10] = 0
             last_frame = beat_freq_data
 
             dets = process_frame(range_fft_s[:, :, r_idxs], {
@@ -233,9 +229,9 @@ def producer_real_time_1843(q, index, lua_file):
             bf_output = beamform_2d_s(range_fft_s[:,:,r_idxs], 0, 180, 1, 70, 110, 1, x_locs[:,0], z_locs, r_idxs, radar_params, 0, dets)
 
             bf_output = np.abs(bf_output)
-            bf_output = median_filter(bf_output, size=(1, 1, 1))
+            bf_output = median_filter(bf_output, size=(1, 1))
 
-            to_plot = np.sum(bf_output, axis=1)
+            to_plot = bf_output
             to_plot /= np.max(to_plot)
             to_plot = to_plot ** 2
             output_top = to_plot
@@ -252,7 +248,7 @@ def producer_real_time_1843(q, index, lua_file):
             powers = output_top.ravel()
 
             # Optional: keep only high-power points
-            threshold = np.percentile(powers, 98)
+            threshold = np.percentile(powers, 99)
             valid_mask = powers > threshold
             points_thresh = points[valid_mask]
 

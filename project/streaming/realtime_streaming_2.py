@@ -32,7 +32,7 @@ class MyApp(ShowBase):
         self.q = queue
         self.latest_msg = None
         self.phi = np.linspace(0, np.pi, 180)
-        self.r_idxs = np.arange(0, 120)
+        self.r_idxs = np.arange(0, 50)
         self.bev_map = np.zeros((len(self.phi), len(self.r_idxs)))
         self.phi_db = np.arange(0, 180, 1) * np.pi / 180
 
@@ -118,6 +118,9 @@ class MyApp(ShowBase):
                 self.fps = self.frame_counter / (current_time - self.last_fps_time)
                 self.last_fps_time = current_time
                 self.frame_counter = 0
+
+            self.fps_text = self.ax.text(0.02, 1.02, f"FPS: {self.fps:.2f}", transform=self.ax.transAxes, fontsize=10,
+                                         color='blue')
 
             # Update FPS text on the polar plot
             self.fps_text.set_text(f"FPS: {self.fps:.2f}")
