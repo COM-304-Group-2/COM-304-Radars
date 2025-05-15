@@ -7,6 +7,10 @@ import utils
 from scipy.signal import convolve2d
 from sklearn.cluster import DBSCAN
 
+from .gtrack.config import Detection
+from .gtrack.config import GTrackConfig2D
+from .gtrack.module import GTrackModule2D
+
 
 
 ################# Change the values based on how much of the azimuth angles you want to see and the resolution ##################
@@ -34,34 +38,55 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
 
     # Radar parameters
     lm = radar_params["lm"]
+    fs       = radar_params["sample_rate"]  # [Hz]
+    num_samps= radar_params["num_samples"]  # ADC samples per chirp
+    N_dop    = 16                           # chirps per frame
+    lam      = radar_params["lm"]           # wavelength [m]
 
+    ## Compute velocity resolution
+    # 1) chirp duration (neglecting idle time)
+    T_chirp = num_samps / fs                # [s]
+
+    # 2) PRF
+    PRF     = 1.0 / T_chirp                 # [Hz]
+
+    # 3) velocity‐resolution
+    vel_res = lam/2 * PRF / N_dop           # [m/s per Doppler bin]
 
     # Convert angles to radians
     phi = np.arange(phi_s, phi_e, phi_res) * np.pi / 180
-    theta = np.arange(theta_s, theta_e, theta_res) * np.pi / 180
-    num_theta = len(theta)
     num_phi = len(phi)
 
-    theta_grid, phi_grid = np.meshgrid(np.sin(theta), np.cos(phi))
-
-    angle_grid = theta_grid * phi_grid
-    angles = x_locs * angle_grid[:,:, np.newaxis]
+    angles = x_locs * np.cos(phi[:, np.newaxis])
     phase_shifts = np.exp((1j * 2 * np.pi / lm) * angles)
 
-    # Initialize output
-    sph_pwr = np.zeros((num_phi, num_theta, r_idxs.shape[0]), dtype=np.complex64)
-
     r_idx, d_idx = np.nonzero(dets)
+
+    # Initialize output
+    sph_pwr = np.zeros((num_phi, r_idxs.shape[0]), dtype=np.complex64)
+
+    detections = []
 
     for d, r in zip(r_idx, d_idx):
 
         beat = beat_freq_data[:, d, r]
-        beamformed_signal = beat[np.newaxis, np.newaxis, :] * phase_shifts
-        sph_pwr[:, :, r] = np.maximum(sph_pwr[:, :, r], np.abs(np.sum(beamformed_signal, axis=-1)))
-        #sph_pwr[:, :, r] += np.abs(np.sum(beamformed_signal, axis=-1))
+        beamformed_signal = beat[np.newaxis, :] * phase_shifts
+        sph_pwr[:, r] = np.maximum(sph_pwr[:, r], np.abs(np.sum(beamformed_signal, axis=-1)))
 
-    return sph_pwr
+        snr = np.abs(np.sum(beamformed_signal, axis=-1)) ## rajouter variance? #shape (num_phi)
 
+        rang = np.repeat(r, num_phi)
+        v = (d - N_dop/2) * vel_res
+        v_all = np.repeat(v, num_phi)
+
+        small_detection = [
+        Detection(r_m, az, v, snr)
+        for r_m, az, v, snr in zip(rang, phi, v_all, snr)
+        ]
+
+        detections.extend(small_detection)
+
+    return sph_pwr, detections
 
 def cfar_ca_2d(power_map,
                num_train_range: int = 10,
@@ -223,19 +248,19 @@ def producer_real_time_1843(q, index, lua_file):
             last_frame = beat_freq_data
 
             dets = process_frame(range_fft_s[:, :, r_idxs], {
-                "num_train_r": 12,
-                "num_train_d": 10,
-                "num_guard_r": 6,
-                "num_guard_d": 6,
+                "num_train_r": 10,
+                "num_train_d": 8,
+                "num_guard_r": 2,
+                "num_guard_d": 2,
                 "threshold_scale": 1e-7
             })
 
-            bf_output = beamform_2d_s(range_fft_s[:,:,r_idxs], 0, 180, 1, 70, 110, 1, x_locs[:,0], z_locs, r_idxs, radar_params, 0, dets)
+            bf_output, detection = beamform_2d_s(range_fft_s[:,:,r_idxs], 0, 180, 1, 70, 110, 1, x_locs[:,0], z_locs, r_idxs, radar_params, 0, dets)
 
             bf_output = np.abs(bf_output)
-            bf_output = median_filter(bf_output, size=(1, 1, 1))
+            #bf_output = median_filter(bf_output, size=(1, 1, 1))
 
-            to_plot = np.sum(bf_output, axis=1)
+            to_plot = bf_output
             to_plot /= np.max(to_plot)
             to_plot = to_plot ** 2
             output_top = to_plot
@@ -259,8 +284,33 @@ def producer_real_time_1843(q, index, lua_file):
             # --- DBSCAN ---
             db = DBSCAN(eps=3, min_samples=10).fit(points_thresh)
 
+            cfg = GTrackConfig2D(
+                max_points=100,  # max detections per frame
+                max_tracks=10,  # max simultaneous tracks
+                dt=0.1,  # time between frames (s)
+                process_noise=0.1,  # Q spectral density
+                meas_noise_range=1.0,  # σ² range noise (m²)
+                meas_noise_az=0.01,  # σ² azimuth noise (rad²)
+                gating_threshold=9.21,  # ≈95% gate for 2-DOF chi²
+                alloc_range_gate=0.5,  # cluster gate (m)
+                alloc_az_gate=0.05,  # cluster gate (rad)
+                alloc_vel_gate=0.5,  # cluster gate (m/s)
+                min_cluster_points=1,  # you can increase if you want multi-point seeds
+                alloc_snr_threshold=5.0,  # sum-SNR threshold
+                init_state_cov=100.0,  # starting P for new tracks
+                det_to_active_count=2,  # hits needed to go ACTIVE
+                det_to_free_count=2,  # misses to drop DETECTION
+                act_to_free_count=3,  # misses to drop ACTIVE
+                presence_zones=[],  # e.g. [PresenceZone2D(-10,10,-5,5)]
+                pres_on_count=1,
+                pres_off_count=3
+            )
+
+            tracker = GTrackModule2D(cfg)
+            output_det = tracker.step(detection)
+
             try:
-                q.put_nowait(("bev", (phi, r_idxs, to_plot, db, points_thresh)))
+                q.put_nowait(("bev", (phi, r_idxs, to_plot, db, points_thresh, output_det)))
             except queue.Full:
                 continue
 

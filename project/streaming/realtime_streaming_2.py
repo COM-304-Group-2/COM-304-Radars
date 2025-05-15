@@ -54,6 +54,9 @@ class MyApp(ShowBase):
         self.ax_2 = self.fig_2.add_subplot(111)
         self._configure_ax_2()
 
+        self.fig_3 = plt.figure(figsize=(6, 6))
+        self.ax_3 = self.fig_3.add_subplot(111)
+
         self.db = None
         self.points_thresh = None
 
@@ -68,6 +71,9 @@ class MyApp(ShowBase):
 
         self.taskMgr.add(self.updateTask, "updateTask")
 
+        self.detection = None
+        self.tracks = None
+
     def _configure_ax(self):
         self.ax.set_theta_zero_location('E')
         self.ax.set_theta_direction(1)
@@ -80,6 +86,28 @@ class MyApp(ShowBase):
         self.ax_2.set_ylabel("Y")
         self.ax_2.set_title("DBSCAN Clustering on Full Heatmap")
 
+    def _configure_ax_3(self):
+        for tr in self.tracks:
+            x, y = tr['pos']
+            vx, vy = tr['vel']
+            uid = tr['uid']
+            confidence = tr.get('confidence', 1.0)
+
+            # draw the position
+            self.ax_3.scatter(x, y, s=100 * confidence, edgecolors='k', facecolors='none')
+            # draw an arrow showing velocity
+            self.ax_3.quiver(x, y, vx, vy, angles='xy', scale_units='xy', scale=1, width=0.005)
+
+            # label with the track ID
+            self.ax_3.text(x, y, f"{uid}", fontsize=12, ha='center', va='center',
+                     bbox=dict(boxstyle='round,pad=0.2', fc='yellow', alpha=0.5))
+
+        self.ax_3.set_xlabel("X position (m)")
+        self.ax_3.set_ylabel("Y position (m)")
+        self.ax_3.set_title("GTRACK 2D Tracks (size ∝ confidence)")
+        self.ax_3.axis('equal')
+        self.ax_3.grid(True)
+
     def updateTask(self, task):
         try:
             while not self.q.empty():
@@ -90,7 +118,7 @@ class MyApp(ShowBase):
             pass
 
         if self.latest_msg:
-            self.phi, self.r_idxs, self.bev_map, self.db, self.points_thresh = self.latest_msg
+            self.phi, self.r_idxs, self.bev_map, self.db, self.points_thresh, self.detection = self.latest_msg
             self.ax.clear()
             self._configure_ax()
             plot_2d_heatmap(self.ax, self.bev_map, self.phi, self.r_idxs, vmin=0, vmax=0.1)
@@ -120,7 +148,11 @@ class MyApp(ShowBase):
                 self.frame_counter = 0
 
             # Update FPS text on the polar plot
-            self.fps_text.set_text(f"FPS: {self.fps:.2f}")
+            self.fps_text = self.ax.text(0.02, 1.02, f"FPS: {self.fps:.2f}", transform=self.ax.transAxes, fontsize=10,
+                                         color='blue')
+
+            self.tracks = self.detection['tracks']
+            #self._configure_ax_3()
 
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
