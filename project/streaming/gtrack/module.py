@@ -1,9 +1,9 @@
 import numpy as np
 
-from config import GTrackConfig2D
-from units import GTrackUnit2D
+from .config import GTrackConfig2D
+from .units import GTrackUnit2D
 from math import *
-from utilities_2d import *
+from .utilities_2d import *
 
 class GTrackModule2D:
     def __init__(self, config: GTrackConfig2D):

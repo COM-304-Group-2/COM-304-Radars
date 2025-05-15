@@ -1,10 +1,10 @@
 # gtrack/unit.py (methods rewritten for 2D)
 
-from utilities_2d import (sph2cart_2d, cart2sph_2d,
+from .utilities_2d import (sph2cart_2d, cart2sph_2d,
                             compute_mahalanobis_2d,
                             calc_gating_limits_2d)
 import numpy as np
-from config import GTrackConfig2D
+from .config import GTrackConfig2D
 
 class GTrackUnit2D:
     def __init__(self, cfg: GTrackConfig2D, F: np.ndarray, Q: np.ndarray):

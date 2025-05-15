@@ -35,3 +35,11 @@ class GTrackConfig2D:
     def state_dim(self): return 4  # [x, y, vx, vy]
     @property
     def meas_dim(self): return 2   # [range, azimuth]
+
+@dataclass
+class Detection:
+    def __init__(self, r, az, v, snr):
+        self.range   = r
+        self.azimuth = az
+        self.doppler = v
+        self.snr     = snr
