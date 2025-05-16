@@ -7,7 +7,7 @@ import utils
 from scipy.signal import convolve2d
 from sklearn.cluster import DBSCAN
 
-from .gtrack.config import Detection
+from .gtrack.config import Detection, PresenceZone2D
 from .gtrack.config import GTrackConfig2D
 from .gtrack.module import GTrackModule2D
 
@@ -73,7 +73,7 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
         beamformed_signal = beat[np.newaxis, :] * phase_shifts
         sph_pwr[:, r] = np.maximum(sph_pwr[:, r], np.abs(np.sum(beamformed_signal, axis=-1)))
 
-        snr = np.abs(np.sum(beamformed_signal, axis=-1)) ## rajouter variance? #shape (num_phi)
+        snr = np.abs(np.sum(beamformed_signal, axis=-1))**8 ## rajouter variance? #shape (num_phi)
 
         rang = np.repeat(r, num_phi)
         v = (d - N_dop/2) * vel_res
@@ -197,7 +197,7 @@ def producer_real_time_1843(q, index, lua_file):
     slope, sample_rate, c = 70.150e6, 10e6, 3e8
     lm = c / 77e9
 
-    r_idxs = np.arange(0, 120)
+    r_idxs = np.arange(0, 70)
     phi = np.deg2rad(np.arange(0, 180, 1))
     theta = np.deg2rad(np.arange(70, 110, 1))
 
@@ -219,27 +219,27 @@ def producer_real_time_1843(q, index, lua_file):
     print("Reading data...")
 
     last_frame = np.zeros((12, 16, 592), dtype=np.complex64)
-    last_beam = np.zeros((180, 40, 120))
+    last_beam = np.zeros((180, 40, 70))
 
     cfg = GTrackConfig2D(
-        max_points=100,  # max detections per frame
-        max_tracks=10,  # max simultaneous tracks
-        dt=0.1,  # time between frames (s)
+        max_points=1000,  # max detections per frame
+        max_tracks=5,  # max simultaneous tracks
+        dt=0.5,  # time between frames (s)
         process_noise=0.1,  # Q spectral density
         meas_noise_range=1.0,  # σ² range noise (m²)
-        meas_noise_az=0.01,  # σ² azimuth noise (rad²)
-        gating_threshold=9.21,  # ≈95% gate for 2-DOF chi²
-        alloc_range_gate=0.5,  # cluster gate (m)
-        alloc_az_gate=0.05,  # cluster gate (rad)
-        alloc_vel_gate=0.5,  # cluster gate (m/s)
-        min_cluster_points=1,  # you can increase if you want multi-point seeds
-        alloc_snr_threshold=5.0,  # sum-SNR threshold
-        init_state_cov=100.0,  # starting P for new tracks
-        det_to_active_count=2,  # hits needed to go ACTIVE
-        det_to_free_count=2,  # misses to drop DETECTION
-        act_to_free_count=3,  # misses to drop ACTIVE
+        meas_noise_az=1,  # σ² azimuth noise (rad²)
+        gating_threshold=5.99,  # ≈95% gate for 2-DOF chi²
+        alloc_range_gate=1,  # cluster gate (m)
+        alloc_az_gate=np.deg2rad(10),  # cluster gate (rad)
+        alloc_vel_gate=20,  # cluster gate (m/s)
+        min_cluster_points=10,  # you can increase if you want multi-point seeds
+        alloc_snr_threshold=2,  # sum-SNR threshold
+        init_state_cov=1.0,  # starting P for new tracks
+        det_to_active_count=5,  # hits needed to go ACTIVE
+        det_to_free_count=4,  # misses to drop DETECTION
+        act_to_free_count=5,  # misses to drop ACTIVE
         presence_zones=[],  # e.g. [PresenceZone2D(-10,10,-5,5)]
-        pres_on_count=1,
+        pres_on_count=5,
         pres_off_count=3
     )
 
@@ -281,12 +281,28 @@ def producer_real_time_1843(q, index, lua_file):
 
             bf_output, detection = beamform_2d_s(range_fft_s[:,:,r_idxs], 0, 180, 1, 70, 110, 1, x_locs[:,0], z_locs, r_idxs, radar_params, 0, dets)
 
+            snrs = np.array([d.snr for d in detection])
+            snrs_max = np.max(snrs)
+
+            #print(len(detection))
+
+            detection_tuned = []
+            for d in detection:
+                d_t = d
+                d_t.snr = d_t.snr / snrs_max
+                detection_tuned.append(d_t)
+
+            detection = [d for d in detection_tuned if d.snr >= 0.2]
+
+            #print(len(detection))
+
+
             bf_output = np.abs(bf_output)
             #bf_output = median_filter(bf_output, size=(1, 1, 1))
 
             to_plot = bf_output
             to_plot /= np.max(to_plot)
-            to_plot = to_plot ** 2
+            to_plot = to_plot ** 8
             output_top = to_plot
 
             # DBSCAN clustering

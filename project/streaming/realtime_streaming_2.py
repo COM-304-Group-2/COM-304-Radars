@@ -32,7 +32,7 @@ class MyApp(ShowBase):
         self.q = queue
         self.latest_msg = None
         self.phi = np.linspace(0, np.pi, 180)
-        self.r_idxs = np.arange(0, 120)
+        self.r_idxs = np.arange(0, 70)
         self.bev_map = np.zeros((len(self.phi), len(self.r_idxs)))
         self.phi_db = np.arange(0, 180, 1) * np.pi / 180
 
@@ -89,7 +89,9 @@ class MyApp(ShowBase):
     def _configure_ax_3(self):
         self.ax_3.set_xlim(-200, 200)
         self.ax_3.set_ylim(-200, 200)
+
         #self.ax_3.set_aspect('equal', adjustable='box')  # keep units equal
+        self.ax_3.autoscale(enable=False)
 
         for tr in self.tracks:
             x, y = tr['pos']
@@ -109,7 +111,7 @@ class MyApp(ShowBase):
         self.ax_3.set_xlabel("X position (m)")
         self.ax_3.set_ylabel("Y position (m)")
         self.ax_3.set_title("GTRACK 2D Tracks (size ∝ confidence)")
-        self.ax_3.axis('equal')
+        #self.ax_3.axis('equal')
         self.ax_3.grid(True)
 
     def updateTask(self, task):
@@ -127,21 +129,21 @@ class MyApp(ShowBase):
             self._configure_ax()
             plot_2d_heatmap(self.ax, self.bev_map, self.phi, self.r_idxs, vmin=0, vmax=0.1)
 
-            self.ax_2.clear()
-            self._configure_ax_2()
-            self.ax_2.imshow(self.bev_map.T, extent=[self.x_coords_m.min(), self.x_coords_m.max(), self.z_coords_m.min(), self.z_coords_m.max()],
-                       origin='lower', aspect='auto', cmap='hot')
+            #self.ax_2.clear()
+            #self._configure_ax_2()
+            #self.ax_2.imshow(self.bev_map.T, extent=[self.x_coords_m.min(), self.x_coords_m.max(), self.z_coords_m.min(), self.z_coords_m.max()],
+             #          origin='lower', aspect='auto', cmap='hot')
 
-            labels = self.db.labels_
+            #labels = self.db.labels_
             # Plot clusters
-            for label in np.unique(labels):
-                if label == -1:
-                    continue  # noise
-                cluster_pts = self.points_thresh[labels == label]
-                self.ax_2.scatter(cluster_pts[:, 0], cluster_pts[:, 1], s=30, label=f'Person {label + 1}', alpha=0.7)
+            #for label in np.unique(labels):
+             #   if label == -1:
+              #      continue  # noise
+               # cluster_pts = self.points_thresh[labels == label]
+                #self.ax_2.scatter(cluster_pts[:, 0], cluster_pts[:, 1], s=30, label=f'Person {label + 1}', alpha=0.7)
 
-            self.ax_2.legend()
-            self.ax_2.grid(True)
+            #self.ax_2.legend()
+            #self.ax_2.grid(True)
 
             # FPS tracking
             current_time = time.time()
@@ -161,6 +163,7 @@ class MyApp(ShowBase):
 
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
+
             plt.pause(0.001)
 
         return Task.cont
