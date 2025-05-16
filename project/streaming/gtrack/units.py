@@ -75,6 +75,8 @@ class GTrackUnit2D:
         vy = v * np.sin(seed.azimuth)
         self.state = np.array([x, y, vx, vy], dtype=float)
         self.P = np.eye(self.cfg.state_dim) * self.cfg.init_state_cov
+        self.apriori_state = self.state.copy()
+        self.apriori_P = self.P.copy()
         self.status = 'DETECTION'
         self.hit_count = 1
         self.miss_count = 0

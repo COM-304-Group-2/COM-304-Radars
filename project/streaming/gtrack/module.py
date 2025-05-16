@@ -30,12 +30,16 @@ class GTrackModule2D:
         return F, Q
 
     def step(self, points, variances=None):
+        print("toto")
         self.heartbeat += 1
         pts = points[:min(len(points), self.config.max_points)]
         for u in list(self.active):
             u.predict()
         self._associate(pts)
         self._allocate(pts)
+
+
+
         for u in list(self.active):
             u.update(pts)
             if u.status == 'FREE':
@@ -60,9 +64,13 @@ class GTrackModule2D:
                 pt.is_unique = False
 
     def _allocate(self, points):
+        print("toto")
         cfg = self.config
         seeds = [pt for pt in points if getattr(pt, 'assigned_id', -1) == -1 and getattr(pt, 'snr', 0) > 0]
         seeds.sort(key=lambda pt: getattr(pt, 'snr', 0), reverse=True)
+        #print("Seed pools (unassigned points):")
+        #for pt in seeds:
+         #   print(f"  r={pt.range:.2f}, az={pt.azimuth:.2f}, v={pt.doppler:.2f}, snr={pt.snr:.1f}")
         for seed in seeds:
             if getattr(seed, '_clustered', False):
                 continue
@@ -96,6 +104,19 @@ class GTrackModule2D:
             for pt in cluster:
                 pt.assigned_id = unit.uid
                 pt.is_unique = True
+
+            #print(f"  → cluster size {len(cluster)}, total_snr={total_snr:.1f}")
+
+            # compute cluster centroid
+            centroid_r = sum(pt.range for pt in cluster) / len(cluster)
+            centroid_az = sum(pt.azimuth for pt in cluster) / len(cluster)
+
+            # decide accept/reject
+            accepted = (len(cluster) >= cfg.min_cluster_points
+                        and total_snr >= cfg.alloc_snr_threshold)
+
+            #print(f"  → cluster size={len(cluster)}, centroid=(r={centroid_r:.2f}, az={centroid_az:.2f}), "
+             #     f"total_snr={total_snr:.1f} → {'ACCEPTED' if accepted else 'REJECTED'}")
 
     def _reclaim(self, unit):
         self.active.remove(unit)

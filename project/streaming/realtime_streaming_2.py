@@ -87,6 +87,10 @@ class MyApp(ShowBase):
         self.ax_2.set_title("DBSCAN Clustering on Full Heatmap")
 
     def _configure_ax_3(self):
+        self.ax_3.set_xlim(-200, 200)
+        self.ax_3.set_ylim(-200, 200)
+        #self.ax_3.set_aspect('equal', adjustable='box')  # keep units equal
+
         for tr in self.tracks:
             x, y = tr['pos']
             vx, vy = tr['vel']
@@ -151,8 +155,9 @@ class MyApp(ShowBase):
             self.fps_text = self.ax.text(0.02, 1.02, f"FPS: {self.fps:.2f}", transform=self.ax.transAxes, fontsize=10,
                                          color='blue')
 
+            self.ax_3.clear()
             self.tracks = self.detection['tracks']
-            #self._configure_ax_3()
+            self._configure_ax_3()
 
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()

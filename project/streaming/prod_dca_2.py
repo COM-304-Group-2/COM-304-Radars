@@ -221,6 +221,30 @@ def producer_real_time_1843(q, index, lua_file):
     last_frame = np.zeros((12, 16, 592), dtype=np.complex64)
     last_beam = np.zeros((180, 40, 120))
 
+    cfg = GTrackConfig2D(
+        max_points=100,  # max detections per frame
+        max_tracks=10,  # max simultaneous tracks
+        dt=0.1,  # time between frames (s)
+        process_noise=0.1,  # Q spectral density
+        meas_noise_range=1.0,  # σ² range noise (m²)
+        meas_noise_az=0.01,  # σ² azimuth noise (rad²)
+        gating_threshold=9.21,  # ≈95% gate for 2-DOF chi²
+        alloc_range_gate=0.5,  # cluster gate (m)
+        alloc_az_gate=0.05,  # cluster gate (rad)
+        alloc_vel_gate=0.5,  # cluster gate (m/s)
+        min_cluster_points=1,  # you can increase if you want multi-point seeds
+        alloc_snr_threshold=5.0,  # sum-SNR threshold
+        init_state_cov=100.0,  # starting P for new tracks
+        det_to_active_count=2,  # hits needed to go ACTIVE
+        det_to_free_count=2,  # misses to drop DETECTION
+        act_to_free_count=3,  # misses to drop ACTIVE
+        presence_zones=[],  # e.g. [PresenceZone2D(-10,10,-5,5)]
+        pres_on_count=1,
+        pres_off_count=3
+    )
+
+    tracker = GTrackModule2D(cfg)
+
     try:
         while True:
             raw = dca.read(timeout=0.5, chirps=chirp_loops, rx=num_rx, tx=num_tx, samples=adc_samples)
@@ -284,29 +308,6 @@ def producer_real_time_1843(q, index, lua_file):
             # --- DBSCAN ---
             db = DBSCAN(eps=3, min_samples=10).fit(points_thresh)
 
-            cfg = GTrackConfig2D(
-                max_points=100,  # max detections per frame
-                max_tracks=10,  # max simultaneous tracks
-                dt=0.1,  # time between frames (s)
-                process_noise=0.1,  # Q spectral density
-                meas_noise_range=1.0,  # σ² range noise (m²)
-                meas_noise_az=0.01,  # σ² azimuth noise (rad²)
-                gating_threshold=9.21,  # ≈95% gate for 2-DOF chi²
-                alloc_range_gate=0.5,  # cluster gate (m)
-                alloc_az_gate=0.05,  # cluster gate (rad)
-                alloc_vel_gate=0.5,  # cluster gate (m/s)
-                min_cluster_points=1,  # you can increase if you want multi-point seeds
-                alloc_snr_threshold=5.0,  # sum-SNR threshold
-                init_state_cov=100.0,  # starting P for new tracks
-                det_to_active_count=2,  # hits needed to go ACTIVE
-                det_to_free_count=2,  # misses to drop DETECTION
-                act_to_free_count=3,  # misses to drop ACTIVE
-                presence_zones=[],  # e.g. [PresenceZone2D(-10,10,-5,5)]
-                pres_on_count=1,
-                pres_off_count=3
-            )
-
-            tracker = GTrackModule2D(cfg)
             output_det = tracker.step(detection)
 
             try:
