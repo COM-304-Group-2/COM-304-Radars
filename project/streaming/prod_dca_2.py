@@ -73,7 +73,7 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
         beamformed_signal = beat[np.newaxis, :] * phase_shifts
         sph_pwr[:, r] = np.maximum(sph_pwr[:, r], np.abs(np.sum(beamformed_signal, axis=-1)))
 
-        snr = np.abs(np.sum(beamformed_signal, axis=-1))**8 ## rajouter variance? #shape (num_phi)
+        snr = np.abs(np.sum(beamformed_signal, axis=-1))**4 ## rajouter variance? #shape (num_phi)
 
         rang = np.repeat(r, num_phi)
         v = (d - N_dop/2) * vel_res
@@ -228,16 +228,16 @@ def producer_real_time_1843(q, index, lua_file):
         process_noise=0.1,  # Q spectral density
         meas_noise_range=1.0,  # σ² range noise (m²)
         meas_noise_az=1,  # σ² azimuth noise (rad²)
-        gating_threshold=5.99,  # ≈95% gate for 2-DOF chi²
+        gating_threshold=16,  # ≈95% gate for 2-DOF chi²
         alloc_range_gate=1,  # cluster gate (m)
         alloc_az_gate=np.deg2rad(10),  # cluster gate (rad)
         alloc_vel_gate=20,  # cluster gate (m/s)
         min_cluster_points=10,  # you can increase if you want multi-point seeds
         alloc_snr_threshold=2,  # sum-SNR threshold
         init_state_cov=1.0,  # starting P for new tracks
-        det_to_active_count=5,  # hits needed to go ACTIVE
+        det_to_active_count=10,  # hits needed to go ACTIVE
         det_to_free_count=4,  # misses to drop DETECTION
-        act_to_free_count=5,  # misses to drop ACTIVE
+        act_to_free_count=4,  # misses to drop ACTIVE
         presence_zones=[],  # e.g. [PresenceZone2D(-10,10,-5,5)]
         pres_on_count=5,
         pres_off_count=3
@@ -269,6 +269,7 @@ def producer_real_time_1843(q, index, lua_file):
             last_frame_fft = np.fft.fft(last_frame, axis=-1)
 
             range_fft_s = range_fft - last_frame_fft
+            range_fft_s[:,:, 0:10] = 0
             last_frame = beat_freq_data
 
             dets = process_frame(range_fft_s[:, :, r_idxs], {
@@ -302,7 +303,7 @@ def producer_real_time_1843(q, index, lua_file):
 
             to_plot = bf_output
             to_plot /= np.max(to_plot)
-            to_plot = to_plot ** 8
+            to_plot = to_plot ** 4
             output_top = to_plot
 
             # DBSCAN clustering

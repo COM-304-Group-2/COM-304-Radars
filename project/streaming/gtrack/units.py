@@ -78,7 +78,7 @@ class GTrackUnit2D:
         self.apriori_state = self.state.copy()
         self.apriori_P = self.P.copy()
         self.status = 'DETECTION'
-        self.hit_count = 1
+        self.hit_count = 0
         self.miss_count = 0
 
     def update(self, points):
@@ -96,6 +96,7 @@ class GTrackUnit2D:
         I = np.eye(self.cfg.state_dim)
         self.P = (I - K @ self.H) @ self.apriori_P
         self.hit_count += 1
+        self.miss_count = 0
         self.dim = np.array([np.ptp(zs[:, 0]), np.ptp(zs[:, 1])])
         self.confidence = min(1.0, self.hit_count / max(1, self.cfg.det_to_active_count))
         self.event()
@@ -105,6 +106,7 @@ class GTrackUnit2D:
         if self.status == 'DETECTION':
             if self.hit_count >= c.det_to_active_count:
                 self.status = 'ACTIVE'
+                self.miss_count = 0
             elif self.miss_count >= c.det_to_free_count:
                 self.status = 'FREE'
         elif self.status == 'ACTIVE' and self.miss_count >= c.act_to_free_count:
@@ -122,4 +124,6 @@ class GTrackUnit2D:
         }
 
     def stop(self):
+        uid = self.uid
         self.__init__(self.cfg, self.F, self.Q)
+        self.uid = uid

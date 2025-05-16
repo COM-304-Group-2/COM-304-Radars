@@ -87,8 +87,8 @@ class MyApp(ShowBase):
         self.ax_2.set_title("DBSCAN Clustering on Full Heatmap")
 
     def _configure_ax_3(self):
-        self.ax_3.set_xlim(-200, 200)
-        self.ax_3.set_ylim(-200, 200)
+        self.ax_3.set_xlim(-50, 50)
+        self.ax_3.set_ylim(0, 100)
 
         #self.ax_3.set_aspect('equal', adjustable='box')  # keep units equal
         self.ax_3.autoscale(enable=False)
