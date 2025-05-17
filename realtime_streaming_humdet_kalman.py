@@ -64,7 +64,7 @@ def apply_dbscan(data):
         if label != -1:  # Ignore noise points
             points = data[clustering.labels_ == label]
             centroid = np.mean(points, axis=0)
-            #clusters.append(centroid)
+            #clusters.append(centroid) # Count IDs
     return clusters
 
 # Update Tracker with Kalman Filtering
