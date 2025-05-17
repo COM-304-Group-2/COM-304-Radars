@@ -245,6 +245,9 @@ def producer_real_time_1843(q, index, lua_file):
 
     tracker = GTrackModule2D(cfg)
 
+    t = 0
+    count = 0
+
     try:
         while True:
             raw = dca.read(timeout=0.5, chirps=chirp_loops, rx=num_rx, tx=num_tx, samples=adc_samples)
@@ -252,6 +255,8 @@ def producer_real_time_1843(q, index, lua_file):
                 continue
             if not q.empty():
                 continue
+
+            t_prod = time.time()
 
             raw = dca.organize(raw, chirp_loops, num_tx, num_rx, adc_samples) # shape = (chirp_loops*tx, rx, samples)
 
@@ -293,7 +298,7 @@ def producer_real_time_1843(q, index, lua_file):
                 d_t.snr = d_t.snr / snrs_max
                 detection_tuned.append(d_t)
 
-            detection = [d for d in detection_tuned if d.snr >= 0.2]
+            detection = [d for d in detection_tuned if d.snr >= 0.01]
 
             #print(len(detection))
 
@@ -304,31 +309,47 @@ def producer_real_time_1843(q, index, lua_file):
             to_plot = bf_output
             to_plot /= np.max(to_plot)
             to_plot = to_plot ** 4
-            output_top = to_plot
+            #output_top = to_plot
 
             # DBSCAN clustering
             # Build full coordinate grid
-            phi_rad_2d, r_idxs_2d = np.meshgrid(phi, r_idxs, indexing='ij')  # shape: (180, 140)
+            #phi_rad_2d, r_idxs_2d = np.meshgrid(phi, r_idxs, indexing='ij')  # shape: (180, 140)
 
-            x_coords_m = np.cos(phi_rad_2d) * r_idxs_2d  # shape: (180, 140)
-            z_coords_m = np.sin(phi_rad_2d) * r_idxs_2d  # shape: (180, 140)
+            #x_coords_m = np.cos(phi_rad_2d) * r_idxs_2d  # shape: (180, 140)
+            #z_coords_m = np.sin(phi_rad_2d) * r_idxs_2d  # shape: (180, 140)
 
             # Flatten for DBSCAN
-            points = np.stack([x_coords_m.ravel(), z_coords_m.ravel()], axis=1)
-            powers = output_top.ravel()
+            #points = np.stack([x_coords_m.ravel(), z_coords_m.ravel()], axis=1)
+            #powers = output_top.ravel()
 
             # Optional: keep only high-power points
-            threshold = np.percentile(powers, 98)
-            valid_mask = powers > threshold
-            points_thresh = points[valid_mask]
+            #threshold = np.percentile(powers, 98)
+            #valid_mask = powers > threshold
+            #points_thresh = points[valid_mask]
 
             # --- DBSCAN ---
-            db = DBSCAN(eps=3, min_samples=10).fit(points_thresh)
+            #db = DBSCAN(eps=3, min_samples=10).fit(points_thresh)
+
+            current_time = time.time()
+
+            #print(len(detection))
 
             output_det = tracker.step(detection)
 
+            next_time = time.time()
+
+            #t  += next_time - current_time
+            #count += 1
+
+            #print(next_time - current_time)
+
+            t_prod_2 = time.time()
+            #print(t_prod_2 - t_prod)
+
+
+
             try:
-                q.put_nowait(("bev", (phi, r_idxs, to_plot, db, points_thresh, output_det)))
+                q.put_nowait(("bev", (phi, r_idxs, to_plot, output_det)))
             except queue.Full:
                 continue
 

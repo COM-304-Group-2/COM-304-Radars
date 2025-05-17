@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from .config import GTrackConfig2D
 from .units import GTrackUnit2D
@@ -30,18 +31,27 @@ class GTrackModule2D:
         return F, Q
 
     def step(self, points, variances=None):
+        time_1 = time.time()
         self.heartbeat += 1
         pts = points[:min(len(points), self.config.max_points)]
         for u in list(self.active):
             u.predict()
+
+        time_2 = time.time()
         self._associate(pts)
+        time_3 = time.time()
         self._allocate(pts)
+        time_4 = time.time()
 
         for u in list(self.active):
             u.update(pts)
             if u.status == 'FREE':
                 self._reclaim(u)
+
+        time_5 = time.time()
         self._presence()
+        time_6 = time.time()
+        #print(f"Time taken predict: {time_2-time_1:.4f}, associate: {time_3-time_2:.4f}, allocate: {time_4-time_3:.4f}, update: {time_5-time_4:.4f}, presence: {time_6-time_5:.4f}")
         return {'tracks': [u.report() for u in self.active], 'presence': self.presence_flag}
 
     def _associate(self, points):
