@@ -44,21 +44,21 @@ class MyApp(ShowBase):
         # Build full coordinate grid
         self.phi_rad_2d, self.r_idxs_2d = np.meshgrid(self.phi_db, self.r_idxs, indexing='ij')  # shape: (180, 140)
 
-        self.x_coords_m = np.cos(self.phi_rad_2d) * self.r_idxs_2d  # shape: (180, 140)
-        self.z_coords_m = np.sin(self.phi_rad_2d) * self.r_idxs_2d # shape: (180, 140)
+        #self.x_coords_m = np.cos(self.phi_rad_2d) * self.r_idxs_2d  # shape: (180, 140)
+        #self.z_coords_m = np.sin(self.phi_rad_2d) * self.r_idxs_2d # shape: (180, 140)
 
         #self.x_coords_m = np.linspace(-180, 180, 1)
         #self.z_coords_m = np.linspace(0, 140, 1)
 
-        self.fig_2 = plt.figure(figsize=(6, 4))
-        self.ax_2 = self.fig_2.add_subplot(111)
-        self._configure_ax_2()
+        #self.fig_2 = plt.figure(figsize=(6, 4))
+        #self.ax_2 = self.fig_2.add_subplot(111)
+        #self._configure_ax_2()
 
         self.fig_3 = plt.figure(figsize=(6, 6))
         self.ax_3 = self.fig_3.add_subplot(111)
 
-        self.db = None
-        self.points_thresh = None
+        #self.db = None
+        #self.points_thresh = None
 
         self.last_frame_time = time.time()
         self.frame_counter = 0
@@ -115,16 +115,20 @@ class MyApp(ShowBase):
         self.ax_3.grid(True)
 
     def updateTask(self, task):
+        new_msg = False
+
         try:
             while not self.q.empty():
                 msg = self.q.get_nowait()
                 if msg[0] == "bev":
                     self.latest_msg = msg[1]
+                    new_msg = True
         except:
             pass
 
-        if self.latest_msg:
-            self.phi, self.r_idxs, self.bev_map, self.db, self.points_thresh, self.detection = self.latest_msg
+        if self.latest_msg and new_msg:
+
+            self.phi, self.r_idxs, self.bev_map, self.detection = self.latest_msg
             self.ax.clear()
             self._configure_ax()
             plot_2d_heatmap(self.ax, self.bev_map, self.phi, self.r_idxs, vmin=0, vmax=0.1)
