@@ -23,6 +23,7 @@ class GTrackModule2D:
     def _build_matrices(self, cfg: GTrackConfig2D):
         dt = cfg.dt
         F = np.array([[1,0,dt,0],[0,1,0,dt],[0,0,1,0],[0,0,0,1]], dtype=float)
+        F[2,2] = F[3,3] = 0.97
         q = cfg.process_noise
         q11 = (dt**4)/4 * q
         q13 = (dt**3)/2 * q
@@ -90,7 +91,8 @@ class GTrackModule2D:
                     if getattr(pt, '_clustered', False) or getattr(pt, 'assigned_id', -1) != -1:
                         continue
                     dr = abs(pt.range - seed.range)
-                    da = abs(pt.azimuth - seed.azimuth)
+                    #da = abs(pt.azimuth - seed.azimuth)
+                    da = abs(wrap_angle(pt.azimuth - seed.azimuth))
                     dv = abs(pt.doppler - seed.doppler)
                     if dr <= cfg.alloc_range_gate and da <= cfg.alloc_az_gate and dv <= cfg.alloc_vel_gate:
                         pt._clustered = True

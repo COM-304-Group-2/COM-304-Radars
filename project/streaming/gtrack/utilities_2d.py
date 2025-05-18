@@ -11,9 +11,14 @@ def cart2sph_2d(x, y):
 
 def calc_gating_limits_2d(P, H, R=None):
     if R is None:
-        R = np.diag([1.0, 1.0])
+        # caller supplies measurement variance (range², az²)
+        raise ValueError("R must be provided")
     S = H @ P @ H.T + R
     return S, np.linalg.inv(S)
 
 def compute_mahalanobis_2d(residual, S_inv):
     return float(residual.T @ S_inv @ residual)
+
+def wrap_angle(angle):
+    """Wrap radian angle to (–π, π]."""
+    return (angle + np.pi) % (2 * np.pi) - np.pi

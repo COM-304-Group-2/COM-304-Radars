@@ -94,6 +94,9 @@ class MyApp(ShowBase):
         self.ax_3.autoscale(enable=False)
 
         for tr in self.tracks:
+            if tr['status'] != 'ACTIVE':
+                continue
+
             x, y = tr['pos']
             vx, vy = tr['vel']
             uid = tr['uid']

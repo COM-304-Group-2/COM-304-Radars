@@ -1,8 +1,8 @@
 # gtrack/unit.py (methods rewritten for 2D)
 
 from .utilities_2d import (sph2cart_2d, cart2sph_2d,
-                            compute_mahalanobis_2d,
-                            calc_gating_limits_2d)
+                           compute_mahalanobis_2d,
+                           calc_gating_limits_2d, wrap_angle)
 import numpy as np
 from .config import GTrackConfig2D
 
@@ -46,14 +46,21 @@ class GTrackUnit2D:
             [x / r,      y / r,     0,  0],
             [-y / (r * r), x / (r * r), 0,  0],
         ], dtype=float)
-        self.S, self.S_inv = calc_gating_limits_2d(self.apriori_P, self.H)
+
+        #self.S, self.S_inv = calc_gating_limits_2d(self.apriori_P, self.H)
+        R = np.diag([self.cfg.meas_noise_range, self.cfg.meas_noise_az])
+        self.S, self.S_inv = calc_gating_limits_2d(self.apriori_P, self.H, R)
 
     def score(self, idx, point, best_score, best_id, second_score):
         # measurement vector
         z = np.array([point.range, point.azimuth])
         # predicted measurement
         r_pred, az_pred = cart2sph_2d(self.apriori_state[0], self.apriori_state[1])
-        residual = z - np.array([r_pred, az_pred])
+
+        #residual = z - np.array([r_pred, az_pred])
+        residual = z - np.array([r_pred, wrap_angle(az_pred)])
+        residual[1] = wrap_angle(residual[1])
+
         m2 = compute_mahalanobis_2d(residual, self.S_inv)
         if m2 < self.cfg.gating_threshold:
             if m2 < best_score[idx]:
@@ -70,9 +77,12 @@ class GTrackUnit2D:
         # initialize state
         x, y = sph2cart_2d(mean_r, mean_az)
         seed = max(cluster, key=lambda pt: getattr(pt, 'snr', 0))
-        v = seed.doppler
-        vx = v * np.cos(seed.azimuth)
-        vy = v * np.sin(seed.azimuth)
+        #v = seed.doppler
+        #vx = v * np.cos(seed.azimuth)
+        #vy = v * np.sin(seed.azimuth)
+        vx = 0
+        vy = 0
+
         self.state = np.array([x, y, vx, vy], dtype=float)
         self.P = np.eye(self.cfg.state_dim) * self.cfg.init_state_cov
         self.apriori_state = self.state.copy()
@@ -90,7 +100,11 @@ class GTrackUnit2D:
         zs = np.array([[pt.range, pt.azimuth] for pt in assigned])
         mean_z = zs.mean(axis=0)
         r_pred, az_pred = cart2sph_2d(self.apriori_state[0], self.apriori_state[1])
+
+        #residual = mean_z - np.array([r_pred, az_pred])
         residual = mean_z - np.array([r_pred, az_pred])
+        residual[1] = wrap_angle(residual[1])
+
         K = self.apriori_P @ self.H.T @ self.S_inv
         self.state = self.apriori_state + K @ residual
         I = np.eye(self.cfg.state_dim)

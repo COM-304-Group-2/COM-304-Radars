@@ -77,7 +77,8 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
         snr = np.abs(np.sum(beamformed_signal, axis=-1))**6 ## rajouter variance? #shape (num_phi)
 
         rang = np.repeat(r, num_phi)
-        v = (d - N_dop/2) * vel_res
+        #v = (d - N_dop/2) * vel_res
+        v = 0
         v_all = np.repeat(v, num_phi)
 
         small_detection = [
@@ -225,7 +226,7 @@ def producer_real_time_1843(q, index, lua_file):
         max_points=300,  # max detections per frame
         max_tracks=5,  # max simultaneous tracks
         dt=0.5,  # time between frames (s)
-        process_noise=0.1,  # Q spectral density
+        process_noise=0.5,  # Q spectral density
         meas_noise_range=1.0,  # σ² range noise (m²)
         meas_noise_az=1,  # σ² azimuth noise (rad²)
         gating_threshold=16,  # ≈95% gate for 2-DOF chi²
@@ -235,9 +236,9 @@ def producer_real_time_1843(q, index, lua_file):
         min_cluster_points=10,  # you can increase if you want multi-point seeds
         alloc_snr_threshold=2,  # sum-SNR threshold
         init_state_cov=1.0,  # starting P for new tracks
-        det_to_active_count=10,  # hits needed to go ACTIVE
-        det_to_free_count=4,  # misses to drop DETECTION
-        act_to_free_count=4,  # misses to drop ACTIVE
+        det_to_active_count=15,  # hits needed to go ACTIVE
+        det_to_free_count=2,  # misses to drop DETECTION
+        act_to_free_count=8,  # misses to drop ACTIVE
         presence_zones=[],  # e.g. [PresenceZone2D(-10,10,-5,5)]
         pres_on_count=5,
         pres_off_count=3
@@ -305,7 +306,7 @@ def producer_real_time_1843(q, index, lua_file):
                 d_t.snr = d_t.snr / snrs_max
                 detection_tuned.append(d_t)
 
-            detection = [d for d in detection_tuned if d.snr >= 0.2]
+            detection = [d for d in detection_tuned if d.snr >= 0.5]
 
             #print(len(detection))
 
