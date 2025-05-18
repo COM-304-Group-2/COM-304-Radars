@@ -31,8 +31,8 @@ class MyApp(ShowBase):
         ShowBase.__init__(self)
         self.q = queue
         self.latest_msg = None
-        self.phi = np.linspace(0, np.pi, 180)
-        self.r_idxs = np.arange(0, 70)
+        self.phi = np.deg2rad(np.arange(0, 180, 1))
+        self.r_idxs = np.arange(0, 150)
         self.bev_map = np.zeros((len(self.phi), len(self.r_idxs)))
         self.phi_db = np.arange(0, 180, 1) * np.pi / 180
 
@@ -87,8 +87,8 @@ class MyApp(ShowBase):
         self.ax_2.set_title("DBSCAN Clustering on Full Heatmap")
 
     def _configure_ax_3(self):
-        self.ax_3.set_xlim(-50, 50)
-        self.ax_3.set_ylim(0, 100)
+        self.ax_3.set_xlim(-70, 70)
+        self.ax_3.set_ylim(0, 150)
 
         #self.ax_3.set_aspect('equal', adjustable='box')  # keep units equal
         self.ax_3.autoscale(enable=False)
@@ -123,6 +123,7 @@ class MyApp(ShowBase):
                 if msg[0] == "bev":
                     self.latest_msg = msg[1]
                     new_msg = True
+
         except:
             pass
 

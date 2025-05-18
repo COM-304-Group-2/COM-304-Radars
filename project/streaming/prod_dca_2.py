@@ -39,8 +39,8 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
     # Radar parameters
     lm = radar_params["lm"]
     fs       = radar_params["sample_rate"]  # [Hz]
-    num_samps= radar_params["num_samples"]  # ADC samples per chirp
-    N_dop    = 16                           # chirps per frame
+    num_samps= radar_params["num_range"]  # ADC samples per chirp
+    N_dop    = radar_params["num_doppler"]                           # chirps per frame
     lam      = radar_params["lm"]           # wavelength [m]
 
     ## Compute velocity resolution
@@ -67,13 +67,14 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
 
     detections = []
 
+
     for d, r in zip(r_idx, d_idx):
 
         beat = beat_freq_data[:, d, r]
         beamformed_signal = beat[np.newaxis, :] * phase_shifts
         sph_pwr[:, r] = np.maximum(sph_pwr[:, r], np.abs(np.sum(beamformed_signal, axis=-1)))
 
-        snr = np.abs(np.sum(beamformed_signal, axis=-1))**4 ## rajouter variance? #shape (num_phi)
+        snr = np.abs(np.sum(beamformed_signal, axis=-1))**6 ## rajouter variance? #shape (num_phi)
 
         rang = np.repeat(r, num_phi)
         v = (d - N_dop/2) * vel_res
@@ -192,37 +193,36 @@ def process_frame(raw_data, cfar_params):
 
 
 def producer_real_time_1843(q, index, lua_file):
-    num_tx, num_rx, adc_samples = 3, 4, 592
+    num_tx, num_rx, adc_samples = 3, 4, 992
     chirp_loops = 16  # mmWave studio sends 3 chirps per TX
-    slope, sample_rate, c = 70.150e6, 10e6, 3e8
+    slope, sample_rate, c = 70.150e6, 5166000, 3e8
+    #slope, sample_rate, c = 70.150e6, 3416000, 3e8
     lm = c / 77e9
 
-    r_idxs = np.arange(0, 70)
+    r_idxs = np.arange(0, 150)
     phi = np.deg2rad(np.arange(0, 180, 1))
-    theta = np.deg2rad(np.arange(70, 110, 1))
+    #theta = np.deg2rad(np.arange(70, 110, 1))
 
     radar_params = {
         "sample_rate": sample_rate,
-        "num_samples": adc_samples,
-        "slope": slope,
+        "num_doppler": chirp_loops,
         "lm": lm,
-        "num_z_stp": num_tx,
+        "num_tx": num_tx,
         "num_rx": num_rx,
-        "adc_samples": adc_samples
+        "num_range": adc_samples
     }
 
     num_virtual_ant = num_tx * num_rx
-    x_locs, z_locs, _ = utils.get_ant_pos_2d(12, 250, 4)
+    x_locs, z_locs, _ = utils.get_ant_pos_2d(num_tx*num_rx, adc_samples, num_rx)
 
     print("Starting DCA1000...")
     dca = DCA1000()
     print("Reading data...")
 
-    last_frame = np.zeros((12, 16, 592), dtype=np.complex64)
-    last_beam = np.zeros((180, 40, 70))
+    last_frame = np.zeros((num_rx*num_tx, chirp_loops, adc_samples), dtype=np.complex64)
 
     cfg = GTrackConfig2D(
-        max_points=1000,  # max detections per frame
+        max_points=300,  # max detections per frame
         max_tracks=5,  # max simultaneous tracks
         dt=0.5,  # time between frames (s)
         process_noise=0.1,  # Q spectral density
@@ -265,16 +265,17 @@ def producer_real_time_1843(q, index, lua_file):
             # ✅ Transpose to (tx, rx, chirp, sample) and reshape to (12, 512)
             beat_freq_data = adc_windowed.reshape(chirp_loops, num_tx, num_rx, adc_samples)
             beat_freq_data = beat_freq_data.transpose(1, 2, 0, 3)
-            beat_freq_data = beat_freq_data.reshape(12, 16, 592)
+            beat_freq_data = beat_freq_data.reshape(num_tx*num_rx, chirp_loops, adc_samples)
 
             #
-            beat_freq_data[:,:, 0:10] = 0
+            #beat_freq_data[:,:, 0:10] = 0
 
             range_fft = np.fft.fft(beat_freq_data, axis=-1)
             last_frame_fft = np.fft.fft(last_frame, axis=-1)
 
             range_fft_s = range_fft - last_frame_fft
             range_fft_s[:,:, 0:10] = 0
+            range_fft_s[:, :, 100:150] = 0
             last_frame = beat_freq_data
 
             dets = process_frame(range_fft_s[:, :, r_idxs], {
@@ -285,7 +286,13 @@ def producer_real_time_1843(q, index, lua_file):
                 "threshold_scale": 1e-7
             })
 
+            t_beam = time.time()
+
             bf_output, detection = beamform_2d_s(range_fft_s[:,:,r_idxs], 0, 180, 1, 70, 110, 1, x_locs[:,0], z_locs, r_idxs, radar_params, 0, dets)
+
+            t_beam_2 = time.time()
+
+            #print(t_beam_2 - t_beam)
 
             snrs = np.array([d.snr for d in detection])
             snrs_max = np.max(snrs)
@@ -298,7 +305,7 @@ def producer_real_time_1843(q, index, lua_file):
                 d_t.snr = d_t.snr / snrs_max
                 detection_tuned.append(d_t)
 
-            detection = [d for d in detection_tuned if d.snr >= 0.01]
+            detection = [d for d in detection_tuned if d.snr >= 0.2]
 
             #print(len(detection))
 
@@ -308,7 +315,7 @@ def producer_real_time_1843(q, index, lua_file):
 
             to_plot = bf_output
             to_plot /= np.max(to_plot)
-            to_plot = to_plot ** 4
+            to_plot = to_plot ** 6
             #output_top = to_plot
 
             # DBSCAN clustering
@@ -345,7 +352,6 @@ def producer_real_time_1843(q, index, lua_file):
 
             t_prod_2 = time.time()
             #print(t_prod_2 - t_prod)
-
 
 
             try:
