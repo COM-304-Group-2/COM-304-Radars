@@ -69,15 +69,17 @@ def apply_dbscan(data):
 # Plot Heatmap using Polar Projection
 def plot_2d_heatmap(ax, data, theta, r):
     R, Theta = np.meshgrid(r, theta)
-    ax.pcolormesh(Theta, R, data, shading='auto', cmap='jet', vmin=0, vmax=np.max(data))
-    ax.set_xlim(0, np.pi)
-    ax.set_ylim(0, np.max(r))
+    ax.pcolormesh(Theta, R, data, shading='nearest', cmap='jet', vmin=0, vmax=0.1)
+    ax.set_xlim(theta[0], theta[-1])
+    ax.set_ylim(r[0], r[-1])
     ax.grid(False)
     return R, Theta
 
 # Plot Clusters using Unified Polar Projection
 def plot_clusters(ax, clusters, R, Theta):
     stats_text = []
+    high_agility = False  # Track if any cluster has high agility
+
     for obj_id, obj in tracker.items():
         r_index = int(obj['pos'][0])
         theta_index = int(obj['pos'][1])
@@ -95,12 +97,23 @@ def plot_clusters(ax, clusters, R, Theta):
         agility = np.abs(speed - obj.get('last_speed', 0))
         obj['last_speed'] = speed
 
+        # Track high agility if any cluster exceeds the threshold
+        if agility > 4:
+            high_agility = True
+
         # Append formatted statistics with correct units
         stats_text.append(f"ID {obj_id}:\nr={r_value:.2f} m\nθ={theta_value:.2f}°\nspeed={speed:.2f} m/s\nagility={agility:.2f}")
 
     # Create a frame on the left for the statistics
     ax.text(-0.3, 1, "\n\n".join(stats_text), transform=ax.transAxes, fontsize=10, 
             color='black', verticalalignment='top', bbox=dict(facecolor='white', alpha=0.7))
+
+    # Display a word indicating high agility on the right side
+    word_color = 'red' if high_agility else 'black'
+    word_text = "High Agility Detected" if high_agility else "Normal Movement"
+    ax.text(0.3, 1, word_text, transform=ax.transAxes, fontsize=12, 
+            color=word_color, verticalalignment='top', fontweight='bold')
+
 
 
 # Update Tracker with ID Management
