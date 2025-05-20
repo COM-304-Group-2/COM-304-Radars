@@ -57,7 +57,7 @@ class DCA1000:
         1. Power cycle DCA1000 and XWR1xxx sensor
         2. Open mmWaveStudio and setup normally until tab SensorConfig or use lua script
         3. Make sure to connect mmWaveStudio to the board via ethernet
-        4. Start streaming data
+        4. Start src data
         5. Read in frames using class
     Examples:
         >>> dca = DCA1000()
@@ -100,7 +100,7 @@ class DCA1000:
         self.frame_ready = False
 
         # Will be removed in a later release
-        self.sensor_config(3, 16, 4, 576)
+        self.sensor_config(chirps = 2, chirp_loops = 1, num_rx = 4, num_samples = 64)
 
     def sensor_config(self, chirps, chirp_loops, num_rx, num_samples, iq=2, num_bytes=2):
         """Adjusts the size of the frame returned from realtime reading.
@@ -228,7 +228,7 @@ class DCA1000:
             ~numpy.ndarray: Array containing a full frame of data based on current sensor config.
         """
         # Configure
-        self.data_socket.settimeout(timeout)
+        self.data_socket.settimeout(10000)#timeout)
 
         # Check if this is the first call
         if self.next_frame is not None:

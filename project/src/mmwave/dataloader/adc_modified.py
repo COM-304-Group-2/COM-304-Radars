@@ -75,7 +75,7 @@ class DCA1000:
         1. Power cycle DCA1000 and XWR1xxx sensor
         2. Open mmWaveStudio and setup normally until tab SensorConfig or use lua script
         3. Make sure to connect mmWaveStudio to the board via ethernet
-        4. Start streaming data
+        4. Start src data
         5. Read in frames using class
 
     Examples:

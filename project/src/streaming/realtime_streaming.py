@@ -3,7 +3,6 @@ import warnings
 warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
 
-import os
 import time
 from multiprocessing import Process, Queue
 from direct.showbase.ShowBase import ShowBase
@@ -13,7 +12,7 @@ matplotlib.use('Qt5Agg')  # Use TkAgg backend for interactive plotting
 import matplotlib.pyplot as plt
 
 import numpy as np
-from streaming.prod_dca_2 import producer_real_time_1843
+from .prod_dca_2 import producer_real_time_1843
 
 def plot_2d_heatmap(ax, data, theta, r, vmin=0, vmax=0.1):
     R, Theta = np.meshgrid(r, theta)
