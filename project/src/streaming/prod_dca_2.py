@@ -10,7 +10,7 @@ from utils.utils import get_ant_pos_2d
 from processing.processing import compute_dbscan
 
 
-def producer_real_time_1843(q, cfg_radar, cfg_gtrack, db=False, gtrack=True):
+def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, db, gtrack):
 
 
     r_idxs = cfg_radar["range_idx"]
@@ -61,18 +61,13 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, db=False, gtrack=True):
             range_fft_s = range_fft - last_frame_fft
             range_fft_s[:,:, 0:10] = 0
             range_fft_s[:, :, 100:150] = 0
+            range_fft_s = range_fft_s[:, :, r_idxs]
             last_frame = beat_freq_data
 
-            dets = process_frame(range_fft_s[:, :, r_idxs], {
-                "num_train_r": 10,
-                "num_train_d": 8,
-                "num_guard_r": 2,
-                "num_guard_d": 2,
-                "threshold_scale": 1e-7
-            })
+            dets = process_frame(range_fft_s, cfg_cfar)
 
 
-            bf_output, detection = beamform_2d_s(range_fft_s[:,:, r_idxs], cfg_radar, x_locs[:,0], dets)
+            bf_output, detection = beamform_2d_s(range_fft_s, cfg_radar, x_locs[:,0], dets)
 
 
 

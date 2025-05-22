@@ -23,6 +23,15 @@ def main():
         "slope": 70.150e6,
     }
 
+    # Parameters for CFAR
+    cfg_cfar = {
+        "num_train_r": 10,
+        "num_train_d": 8,
+        "num_guard_r": 2,
+        "num_guard_d": 2,
+        "threshold_scale": 1e-7
+    }
+
     # Parameters for Gtrack
     cfg_gtrack = GTrackConfig2D(
         max_points=300,  # max detections per frame
@@ -46,7 +55,7 @@ def main():
         pres_off_count=3
     )
 
-    realtime_streaming.main(cfg_radar, cfg_gtrack)
+    realtime_streaming.main(cfg_radar, cfg_gtrack, cfg_cfar)
 
 if __name__ == "__main__":
     main()
