@@ -11,7 +11,7 @@ import matplotlib
 matplotlib.use('Qt5Agg')  # Use TkAgg backend for interactive plotting
 import matplotlib.pyplot as plt
 
-from .prod_dca_2 import producer_real_time_1843
+from .prod_dca import producer_real_time_1843
 from visualization.visualization import configure_ax_bf, configure_ax_db, configure_ax_gtrack, plot_2d_heatmap
 
 

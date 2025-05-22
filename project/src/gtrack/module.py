@@ -92,7 +92,7 @@ class GTrackModule2D:
                     n_jobs=-1).fit(X)
         labels = db.labels_
 
-        # allocate each cluster above your SNR threshold
+        # allocate each cluster above the SNR threshold
         for lab in set(labels):
             if lab == -1 or not self.free:
                 continue
