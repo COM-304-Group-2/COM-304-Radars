@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from .prod_dca_2 import producer_real_time_1843
 
+from visualization.visualization import configure_ax_bf, configure_ax_db, configure_ax_gtrack
+
 def plot_2d_heatmap(ax, data, theta, r, vmin=0, vmax=0.1):
     R, Theta = np.meshgrid(r, theta)
     ax.pcolormesh(Theta, R, data, shading='nearest', cmap='jet', vmin=vmin, vmax=vmax)
@@ -43,15 +45,15 @@ class MyApp(ShowBase):
         # Build full coordinate grid
         self.phi_rad_2d, self.r_idxs_2d = np.meshgrid(self.phi_db, self.r_idxs, indexing='ij')  # shape: (180, 140)
 
-        #self.x_coords_m = np.cos(self.phi_rad_2d) * self.r_idxs_2d  # shape: (180, 140)
-        #self.z_coords_m = np.sin(self.phi_rad_2d) * self.r_idxs_2d # shape: (180, 140)
+        self.x_coords_m = np.cos(self.phi_rad_2d) * self.r_idxs_2d  # shape: (180, 140)
+        self.z_coords_m = np.sin(self.phi_rad_2d) * self.r_idxs_2d # shape: (180, 140)
 
-        #self.x_coords_m = np.linspace(-180, 180, 1)
-        #self.z_coords_m = np.linspace(0, 140, 1)
+        self.x_coords_m = np.linspace(-180, 180, 1)
+        self.z_coords_m = np.linspace(0, 140, 1)
 
-        #self.fig_2 = plt.figure(figsize=(6, 4))
-        #self.ax_2 = self.fig_2.add_subplot(111)
-        #self._configure_ax_2()
+        self.fig_2 = plt.figure(figsize=(6, 4))
+        self.ax_2 = self.fig_2.add_subplot(111)
+        self._configure_ax_2()
 
         self.fig_3 = plt.figure(figsize=(6, 6))
         self.ax_3 = self.fig_3.add_subplot(111)
@@ -133,21 +135,22 @@ class MyApp(ShowBase):
 
             self.bev_map, self.db, self.gtrack = self.latest_msg
             self.ax.clear()
-            self._configure_ax()
+            configure_ax_bf(self.ax)
+            #self._configure_ax()
             plot_2d_heatmap(self.ax, self.bev_map, self.phi, self.r_idxs, vmin=0, vmax=0.1)
 
             #self.ax_2.clear()
             #self._configure_ax_2()
             #self.ax_2.imshow(self.bev_map.T, extent=[self.x_coords_m.min(), self.x_coords_m.max(), self.z_coords_m.min(), self.z_coords_m.max()],
-             #          origin='lower', aspect='auto', cmap='hot')
+               #        origin='lower', aspect='auto', cmap='hot')
 
             #labels = self.db.labels_
             # Plot clusters
             #for label in np.unique(labels):
              #   if label == -1:
-              #      continue  # noise
-               # cluster_pts = self.points_thresh[labels == label]
-                #self.ax_2.scatter(cluster_pts[:, 0], cluster_pts[:, 1], s=30, label=f'Person {label + 1}', alpha=0.7)
+                   # continue  # noise
+              #  cluster_pts = self.points_thresh[labels == label]
+               # self.ax_2.scatter(cluster_pts[:, 0], cluster_pts[:, 1], s=30, label=f'Person {label + 1}', alpha=0.7)
 
             #self.ax_2.legend()
             #self.ax_2.grid(True)
@@ -166,7 +169,8 @@ class MyApp(ShowBase):
 
             self.ax_3.clear()
             self.tracks = self.gtrack['tracks']
-            self._configure_ax_3()
+            configure_ax_gtrack(self.ax_3, self.tracks)
+            #self._configure_ax_3()
 
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()

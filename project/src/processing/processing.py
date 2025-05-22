@@ -219,7 +219,7 @@ def compute_dbscan(output_top, r_idxs, phi, eps=0.5, min_samples=5, p_treshold= 
     points_thresh = points[valid_mask]
 
     # DBSCAN
-    db = DBSCAN(esp = eps, min_samples=min_samples).fit(points_thresh)
+    db = DBSCAN(eps = 0.5, min_samples=min_samples).fit(points_thresh)
 
     return db
 
