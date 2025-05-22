@@ -19,5 +19,4 @@ def compute_mahalanobis_2d(residual, S_inv):
     return float(residual.T @ S_inv @ residual)
 
 def wrap_angle(angle):
-    """Wrap radian angle to (–π, π]."""
     return (angle + np.pi) % (2 * np.pi) - np.pi
