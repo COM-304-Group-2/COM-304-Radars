@@ -10,6 +10,7 @@ from direct.task import Task
 import matplotlib
 matplotlib.use('Qt5Agg')  # Use TkAgg backend for interactive plotting
 import matplotlib.pyplot as plt
+plt.style.use('seaborn-v0_8-dark')
 
 from .prod_dca import producer_real_time_1843
 from visualization.visualization import configure_ax_bf, configure_ax_db, configure_ax_gtrack, plot_2d_heatmap
@@ -27,13 +28,13 @@ class MyApp(ShowBase):
         self.phi = cfg_radar["phi"]
         self.r_idxs = cfg_radar["range_idx"]
 
-        plt.ion() # Plus lent ??
+        #plt.ion() # Plus lent ??
 
         self.fig = plt.figure(figsize=(6, 6))
         self.ax = self.fig.add_subplot(111, projection='polar')
         configure_ax_bf(self.ax)
 
-        self.fig_3 = plt.figure(figsize=(6, 6))
+        self.fig_3 = plt.figure(figsize=(8, 6), constrained_layout=True)
         self.ax_3 = self.fig_3.add_subplot(111)
 
         self.last_frame_time = time.time()

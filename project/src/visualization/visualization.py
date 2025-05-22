@@ -77,9 +77,9 @@ def configure_ax_gtrack(ax, tracks):
               bbox_to_anchor=(1.02, 0.5),
               borderaxespad=0.0)
 
-    ax.set_xlabel("X position (m)")
-    ax.set_ylabel("Y position (m)")
-    ax.set_title("GTRACK 2D Tracks (color → cluster/ID)")
+    ax.set_xlabel("X position")
+    ax.set_ylabel("Y position)")
+    ax.set_title("GTRACK 2D Tracks")
     ax.grid(True)
 
 
