@@ -1,23 +1,52 @@
-from mmwavecapture.radar import Radar
 from . import realtime_streaming
-
+from gtrack.config import (GTrackConfig2D)
+import numpy as np
 
 
 def main():
-    cfg_file = "../configs/profile_1.cfg"
-    radar = Radar(
-        config_port="/dev/tty.usbmodemR20910491",
-        config_baudrate=115200,
-        data_port="/dev/tty.usbmodemR20910494",
-        data_baudrate=921600,
-        config_filename=cfg_file,
-        initialize_connection_and_radar=True,
-        capture_frames=0,
+
+    # Parameters for the range-azimuth beamforming
+    r_idxs = np.arange(0, 50)
+    phi = np.deg2rad(np.arange(0, 180, 1))
+
+    # Radar  parameters
+    cfg_radar = {
+        "range_idx": r_idxs,
+        "phi": phi,
+        "num_tx": 3,
+        "num_rx": 4,
+        "num_doppler": 16,
+        "num_range": 992,
+        "sample_rate": 5166000,
+        "c": 3e8,
+        "lm": 3e8 / 77e9,
+        "slope": 70.150e6,
+    }
+
+    # Parameters for Gtrack
+    cfg_gtrack = GTrackConfig2D(
+        max_points=300,  # max detections per frame
+        max_tracks=5,  # max simultaneous tracks
+        dt=0.5,  # time between frames (s)
+        process_noise=0.5,  # Q spectral density
+        meas_noise_range=1.0,  # σ² range noise (m²)
+        meas_noise_az=1,  # σ² azimuth noise (rad²)
+        gating_threshold=16,  # ≈95% gate for 2-DOF chi²
+        alloc_range_gate=1,  # cluster gate (m)
+        alloc_az_gate=np.deg2rad(10),  # cluster gate (rad)
+        alloc_vel_gate=20,  # cluster gate (m/s)
+        min_cluster_points=10,  # you can increase if you want multi-point seeds
+        alloc_snr_threshold=2,  # sum-SNR threshold
+        init_state_cov=1.0,  # starting P for new tracks
+        det_to_active_count=15,  # hits needed to go ACTIVE
+        det_to_free_count=2,  # misses to drop DETECTION
+        act_to_free_count=8,  # misses to drop ACTIVE
+        presence_zones=[],  # e.g. [PresenceZone2D(-10,10,-5,5)]
+        pres_on_count=5,
+        pres_off_count=3
     )
 
-    realtime_streaming.main(
-        exp_num=0,
-        lua_file=cfg_file)
+    realtime_streaming.main(cfg_radar, cfg_gtrack)
 
 if __name__ == "__main__":
     main()

@@ -1,39 +1,35 @@
 import numpy as np
-import queue
-import time
 from scipy.ndimage import median_filter
-
 
 from scipy.signal import convolve2d
 from sklearn.cluster import DBSCAN
-
-#from project.src.gtrack.config import Detection
-
-
 from gtrack.config import Detection
 
 
-################# Change the values based on how much of the azimuth angles you want to see and the resolution ##################
-# Define field of view in degrees that you want to process in theta, phi and range bins
-def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta_res, x_locs, z_locs, r_idxs, radar_params, index, dets):
+
+
+def beamform_2d_s(beat_freq_data, radar_params, x_locs, dets):
     """
     Performs 2D beamforming along the azimuth (horizontal) dimension, this results in a bird eye view image.
-    - beat_freq_data: beat data AKA the range FFT (size: num_x_stps * num_z_stps * num TX * num RX, num ADC samples)
-    - phi_s: first azimuth angle that you want to start computing
-    - phi_e: last azimuth angle that you want to compute
-    - phi_res: resolution of the azimuth angles you want to compute
-    - theta_s: first elevation angle that you want to start computing
-    - theta_e: last elevation angle that you want to compute
-    - theta_res: resolution of the elevation angles you want to compute
-    - x_locs: x coordinate of antenna locations
-    - z_locs: z coordinate of antenna locations
-    - r_idx: range bins to calculate
-    - radar_parms: radar_params if needed
 
-    Returns:
-    - sph_pwr: beamformed result (size: n_phi, n_theta, n_range)
-    - phi: array of azimuth angles
-    - theta: array of elevation angles
+    Parameters
+    ----------
+    beat_freq_data : np.ndarray
+        The beat frequency data, typically a 3D array.
+    phi_s : float
+        The starting azimuth angle in degrees.
+    phi_e : float
+        The ending azimuth angle in degrees.
+    phi_res : float
+        The azimuth angle resolution in degrees.
+    x_locs : np.ndarray
+        The x-coordinates of the antennas.
+    r_idxs : np.ndarray
+        The range indices corresponding to the beat frequency data.
+    radar_params : dict
+        A dictionary containing radar parameters such as sample rate, number of range samples, etc.
+    dets : np.ndarray
+        The detections from the CFAR process.
     """
 
     # Radar parameters
@@ -44,18 +40,19 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
     lam      = radar_params["lm"]           # wavelength [m]
 
     ## Compute velocity resolution
-    # 1) chirp duration (neglecting idle time)
+    # chirp duration (neglecting idle time)
     T_chirp = num_samps / fs                # [s]
 
-    # 2) PRF
+    # PRF
     PRF     = 1.0 / T_chirp                 # [Hz]
 
-    # 3) velocity‐resolution
+    # velocity‐resolution
     vel_res = lam/2 * PRF / N_dop           # [m/s per Doppler bin]
 
     # Convert angles to radians
-    phi = np.arange(phi_s, phi_e, phi_res) * np.pi / 180
+    phi = radar_params["phi"]
     num_phi = len(phi)
+    r_idxs = radar_params["range_idx"]
 
     angles = x_locs * np.cos(phi[:, np.newaxis])
     phase_shifts = np.exp((1j * 2 * np.pi / lm) * angles)
@@ -90,12 +87,13 @@ def beamform_2d_s(beat_freq_data, phi_s, phi_e, phi_res, theta_s, theta_e, theta
 
     return sph_pwr, detections
 
+
 def cfar_ca_2d(power_map,
                num_train_range: int = 10,
                num_train_doppler: int = 8,
                num_guard_range: int = 2,
                num_guard_doppler: int = 2,
-               rate_fa: float = 1e-3):
+               rate_fa: float = 1e-5):
     """
     2D Cell-Averaging CFAR on a (range × Doppler) power map.
 
@@ -154,10 +152,10 @@ def cfar_ca_2d(power_map,
     return power_map > threshold
 
 
-def process_frame(raw_data, cfar_params):
+def process_frame(range_fft, cfar_params):
     """
     Full pipeline for one frame:
-      raw_data : np.array, shape (N_ant, N_adc, N_chirps)
+      range_fft : np.array, shape (N_ant, N_adc, N_chirps)
       radar_params : dict with at least "fc" (Hz)
       x_locs, z_locs : 1D arrays of antenna x,z positions (meters)
       phi_*, theta_* : angle scan bounds/resolution (degrees)
@@ -169,18 +167,14 @@ def process_frame(raw_data, cfar_params):
     returns
         dets : list of (r_idx, d_idx) tuples
     """
-    N_ant, N_adc, N_chirps = raw_data.shape
 
-    # 1) Range FFT
-    #rng_ffted = np.fft.fft(raw_data, axis=2)   # → (N_ant, N_adc, N_R=N_chirps)
+    # Doppler FFT
+    rd_cube = np.fft.fft(range_fft, axis=1)    # → (N_ant, N_D=N_adc, N_R=N_chirps)
 
-    # 2) Doppler FFT
-    rd_cube = np.fft.fft(raw_data, axis=1)    # → (N_ant, N_D=N_adc, N_R=N_chirps)
-
-    # 3) Build RD magnitude for CFAR (average across antennas)
+    # Build RD magnitude for CFAR (average across antennas)
     rd_map = np.mean(np.abs(rd_cube)**2, axis=0)  # shape (N_R, N_D)
 
-    # 4) CFAR detections
+    # CFAR detections
     dets = cfar_ca_2d(rd_map,
                     cfar_params["num_train_r"],
                     cfar_params["num_train_d"],
@@ -189,4 +183,43 @@ def process_frame(raw_data, cfar_params):
                     cfar_params["threshold_scale"])
 
     return dets
+
+
+def compute_dbscan(output_top, r_idxs, phi, eps=0.5, min_samples=5, p_treshold= 98):
+    """
+    Compute DBSCAN clustering on the output of the beamforming process.
+
+    Parameters
+    ----------
+    output_top : np.ndarray
+        The output of the beamforming process, typically a 2D array.
+    r_idxs : np.ndarray
+        The range indices corresponding to the output.
+    phi : np.ndarray
+        The azimuth angles corresponding to the output.
+    eps : float
+        The maximum distance between two samples for one to be considered as in the neighborhood of the other.
+    min_samples : int
+        The number of samples in a neighborhood for a point to be considered as a core point.
+    """
+
+    # Build full coordinate grid
+    phi_rad_2d, r_idxs_2d = np.meshgrid(phi, r_idxs, indexing='ij')  # shape: (180, 140)
+
+    x_coords_m = np.cos(phi_rad_2d) * r_idxs_2d  # shape: (180, 140)
+    z_coords_m = np.sin(phi_rad_2d) * r_idxs_2d  # shape: (180, 140)
+
+    # Flatten for DBSCAN
+    points = np.stack([x_coords_m.ravel(), z_coords_m.ravel()], axis=1)
+    powers = output_top.ravel()
+
+    # Keep only high-power points
+    threshold = np.percentile(powers, p_treshold)
+    valid_mask = powers > threshold
+    points_thresh = points[valid_mask]
+
+    # DBSCAN
+    db = DBSCAN(esp = eps, min_samples=min_samples).fit(points_thresh)
+
+    return db
 

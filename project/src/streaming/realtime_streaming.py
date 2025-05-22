@@ -175,10 +175,10 @@ class MyApp(ShowBase):
 
         return Task.cont
 
-def main(exp_num, lua_file):
+def main(cfg_radar, cfg_gtrack):
     q_main = Queue(maxsize=1)  # ❗️ Only keep latest
 
-    producers = [Process(target=producer_real_time_1843, args=(q_main, 0, lua_file), daemon=True)]
+    producers = [Process(target=producer_real_time_1843, args=(q_main, cfg_radar, cfg_gtrack), daemon=True)]
     consumers = [Process(target=consumer, args=(q_main, 0), daemon=True)]
 
     for p in producers: p.start()
