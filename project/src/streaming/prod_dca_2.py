@@ -94,13 +94,13 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, db, gtrack):
             if db:
                 db_output = compute_dbscan(to_plot, r_idxs, phi)
 
-            # Compute GTrack
+            # Compute GTrack (optional)
             if gtrack:
                 gtrack_output = tracker.step(detection)
 
             # Send the data to the queue
             try:
-                q.put_nowait(("bev", (phi, r_idxs, to_plot, db_output, gtrack_output)))
+                q.put_nowait(("bev", (to_plot, db_output, gtrack_output)))
             except queue.Full:
                 continue
 

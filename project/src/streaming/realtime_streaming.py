@@ -21,17 +21,17 @@ def plot_2d_heatmap(ax, data, theta, r, vmin=0, vmax=0.1):
     ax.set_ylim(r[0], r[-1])
     ax.grid(False)
 
-def consumer(q, index):
-    app = MyApp(q)
+def consumer(q, cfg_radar):
+    app = MyApp(q, cfg_radar)
     app.run()
 
 class MyApp(ShowBase):
-    def __init__(self, queue):
+    def __init__(self, queue, cfg_radar):
         ShowBase.__init__(self)
         self.q = queue
         self.latest_msg = None
-        self.phi = np.deg2rad(np.arange(0, 180, 1))
-        self.r_idxs = np.arange(0, 150)
+        self.phi = cfg_radar["phi"]
+        self.r_idxs = cfg_radar["range_idx"]
         self.bev_map = np.zeros((len(self.phi), len(self.r_idxs)))
         self.phi_db = np.arange(0, 180, 1) * np.pi / 180
 
@@ -131,7 +131,7 @@ class MyApp(ShowBase):
 
         if self.latest_msg and new_msg:
 
-            self.phi, self.r_idxs, self.bev_map, self.db, self.gtrack = self.latest_msg
+            self.bev_map, self.db, self.gtrack = self.latest_msg
             self.ax.clear()
             self._configure_ax()
             plot_2d_heatmap(self.ax, self.bev_map, self.phi, self.r_idxs, vmin=0, vmax=0.1)
@@ -179,7 +179,7 @@ def main(cfg_radar, cfg_gtrack, cfg_cfar, db=False, gtrack=True):
     q_main = Queue(maxsize=1)  # ❗️ Only keep latest
 
     producers = [Process(target=producer_real_time_1843, args=(q_main, cfg_radar, cfg_gtrack, cfg_cfar, db, gtrack), daemon=True)]
-    consumers = [Process(target=consumer, args=(q_main, 0), daemon=True)]
+    consumers = [Process(target=consumer, args=(q_main, cfg_radar), daemon=True)]
 
     for p in producers: p.start()
     for c in consumers: c.start()
