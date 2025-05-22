@@ -1,4 +1,3 @@
-# gtrack/utilities_2d.py
 import numpy as np
 
 def sph2cart_2d(r, az):

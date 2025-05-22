@@ -1,9 +1,7 @@
-# gtrack/unit.py (methods rewritten for 2D)
-
+import numpy as np
 from .utilities_2d import (sph2cart_2d, cart2sph_2d,
                            compute_mahalanobis_2d,
                            calc_gating_limits_2d, wrap_angle)
-import numpy as np
 from .config import GTrackConfig2D
 
 class GTrackUnit2D:

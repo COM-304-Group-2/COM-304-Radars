@@ -1,9 +1,9 @@
 import numpy as np
 import time
+from math import *
 
 from .config import GTrackConfig2D
 from .units import GTrackUnit2D
-from math import *
 from .utilities_2d import *
 
 class GTrackModule2D:
