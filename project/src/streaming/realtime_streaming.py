@@ -60,7 +60,7 @@ class MyApp(ShowBase):
 
         if self.latest_msg and new_msg:
             # Unpack the latest message
-            bf, db, gtrack = self.latest_msg
+            bf, gtrack = self.latest_msg
 
             # Update the beamforming plot
             self.ax.clear()
@@ -92,10 +92,10 @@ class MyApp(ShowBase):
 
         return Task.cont
 
-def main(cfg_radar, cfg_gtrack, cfg_cfar, db=False, gtrack=True):
+def main(cfg_radar, cfg_gtrack, cfg_cfar, gtrack=True):
     q_main = Queue(maxsize=1)  # ❗️ Only keep latest
 
-    producers = [Process(target=producer_real_time_1843, args=(q_main, cfg_radar, cfg_gtrack, cfg_cfar, db, gtrack), daemon=True)]
+    producers = [Process(target=producer_real_time_1843, args=(q_main, cfg_radar, cfg_gtrack, cfg_cfar, gtrack), daemon=True)]
     consumers = [Process(target=consumer, args=(q_main, cfg_radar), daemon=True)]
 
     for p in producers: p.start()

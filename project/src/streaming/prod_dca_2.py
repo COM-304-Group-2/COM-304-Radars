@@ -10,7 +10,7 @@ from utils.utils import get_ant_pos_2d
 from processing.processing import compute_dbscan
 
 
-def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, db, gtrack):
+def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, gtrack):
     # Parameters
     r_idxs = cfg_radar["range_idx"]
     phi = cfg_radar["phi"]
@@ -20,7 +20,6 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, db, gtrack):
     adc_samples = cfg_radar["num_range"]
 
     last_frame = np.zeros((num_rx * num_tx, chirp_loops, adc_samples), dtype=np.complex64)
-    db_output = []
     gtrack_output = []
 
     # Initialize the GTrack module
@@ -90,17 +89,13 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, db, gtrack):
             to_plot /= np.max(to_plot)
             to_plot = to_plot ** 6
 
-            # Compute the DBSCAN (optional)
-            if db:
-                db_output = compute_dbscan(to_plot, r_idxs, phi)
-
             # Compute GTrack (optional)
             if gtrack:
                 gtrack_output = tracker.step(detection)
 
             # Send the data to the queue
             try:
-                q.put_nowait(("bev", (to_plot, db_output, gtrack_output)))
+                q.put_nowait(("bev", (to_plot, gtrack_output)))
             except queue.Full:
                 continue
 
