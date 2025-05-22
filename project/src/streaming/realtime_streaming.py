@@ -67,8 +67,8 @@ class MyApp(ShowBase):
             plot_2d_heatmap(self.ax, bev_map, self.phi, self.r_idxs, vmin=0, vmax=0.1)
 
             self.ax_3.clear()
-            self.tracks = gtrack['tracks']
-            configure_ax_gtrack(self.ax_3, self.tracks)
+            tracks = gtrack['tracks']
+            configure_ax_gtrack(self.ax_3, tracks)
 
             # FPS tracking
             current_time = time.time()
