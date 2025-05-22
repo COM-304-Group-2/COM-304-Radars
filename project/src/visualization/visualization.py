@@ -30,6 +30,7 @@ def configure_ax_gtrack(ax, tracks):
 
         # draw the position
         ax.scatter(x, y, s=100 * confidence, edgecolors='k', facecolors='none')
+
         # draw an arrow showing velocity
         ax.quiver(x, y, vx, vy, angles='xy', scale_units='xy', scale=1, width=0.005)
 

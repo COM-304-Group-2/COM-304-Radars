@@ -59,13 +59,15 @@ class MyApp(ShowBase):
             pass
 
         if self.latest_msg and new_msg:
+            # Unpack the latest message
+            bf, db, gtrack = self.latest_msg
 
-            bev_map, db, gtrack = self.latest_msg
+            # Update the beamforming plot
             self.ax.clear()
             configure_ax_bf(self.ax)
+            plot_2d_heatmap(self.ax, bf, self.phi, self.r_idxs, vmin=0, vmax=0.1)
 
-            plot_2d_heatmap(self.ax, bev_map, self.phi, self.r_idxs, vmin=0, vmax=0.1)
-
+            # Update the gtrack plot
             self.ax_3.clear()
             tracks = gtrack['tracks']
             configure_ax_gtrack(self.ax_3, tracks)
