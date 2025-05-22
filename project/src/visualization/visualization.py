@@ -1,4 +1,4 @@
-
+import numpy as np
 
 def configure_ax_bf(ax):
     ax.set_theta_zero_location('E')
@@ -17,8 +17,6 @@ def configure_ax_db(ax):
 def configure_ax_gtrack(ax, tracks):
     ax.set_xlim(-70, 70)
     ax.set_ylim(0, 150)
-
-    # self.ax_3.set_aspect('equal', adjustable='box')  # keep units equal
     ax.autoscale(enable=False)
 
     for tr in tracks:
@@ -43,3 +41,11 @@ def configure_ax_gtrack(ax, tracks):
     ax.set_ylabel("Y position (m)")
     ax.set_title("GTRACK 2D Tracks (size ∝ confidence)")
     ax.grid(True)
+
+
+def plot_2d_heatmap(ax, data, theta, r, vmin=0, vmax=0.1):
+    R, Theta = np.meshgrid(r, theta)
+    ax.pcolormesh(Theta, R, data, shading='nearest', cmap='jet', vmin=vmin, vmax=vmax)
+    ax.set_xlim(theta[0], theta[-1])
+    ax.set_ylim(r[0], r[-1])
+    ax.grid(False)
