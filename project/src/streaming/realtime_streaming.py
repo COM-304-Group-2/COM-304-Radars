@@ -56,7 +56,7 @@ class MyApp(ShowBase):
         self.fig_3 = plt.figure(figsize=(6, 6))
         self.ax_3 = self.fig_3.add_subplot(111)
 
-        #self.db = None
+        self.db = None
         #self.points_thresh = None
 
         self.last_frame_time = time.time()
@@ -70,7 +70,7 @@ class MyApp(ShowBase):
 
         self.taskMgr.add(self.updateTask, "updateTask")
 
-        self.detection = None
+        self.gtrack = None
         self.tracks = None
 
     def _configure_ax(self):
@@ -131,7 +131,7 @@ class MyApp(ShowBase):
 
         if self.latest_msg and new_msg:
 
-            self.phi, self.r_idxs, self.bev_map, self.detection = self.latest_msg
+            self.phi, self.r_idxs, self.bev_map, self.db, self.gtrack = self.latest_msg
             self.ax.clear()
             self._configure_ax()
             plot_2d_heatmap(self.ax, self.bev_map, self.phi, self.r_idxs, vmin=0, vmax=0.1)
@@ -165,7 +165,7 @@ class MyApp(ShowBase):
                                          color='blue')
 
             self.ax_3.clear()
-            self.tracks = self.detection['tracks']
+            self.tracks = self.gtrack['tracks']
             self._configure_ax_3()
 
             self.fig.canvas.draw()

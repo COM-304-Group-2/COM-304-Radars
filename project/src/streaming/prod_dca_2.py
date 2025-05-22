@@ -20,6 +20,10 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, db, gtrack):
     adc_samples = cfg_radar["num_range"]
 
     last_frame = np.zeros((num_rx * num_tx, chirp_loops, adc_samples), dtype=np.complex64)
+    db_output = []
+    gtrack_output = []
+
+    # Initialize the GTrack module
     tracker = GTrackModule2D(cfg_gtrack)
 
     # Get the antenna positions
@@ -91,11 +95,12 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, db, gtrack):
                 db_output = compute_dbscan(to_plot, r_idxs, phi)
 
             # Compute GTrack
-            output_det = tracker.step(detection)
+            if gtrack:
+                gtrack_output = tracker.step(detection)
 
             # Send the data to the queue
             try:
-                q.put_nowait(("bev", (phi, r_idxs, to_plot, output_det)))
+                q.put_nowait(("bev", (phi, r_idxs, to_plot, db_output, gtrack_output)))
             except queue.Full:
                 continue
 
