@@ -22,6 +22,7 @@ class GTrackConfig2D:
     alloc_vel_gate: float           # clustering gate: velocity difference (m/s)
     min_cluster_points: int         # minimum detections to form a new track
     alloc_snr_threshold: float      # minimum summed SNR for a new track
+    min_snr_threshold: float        # minimum SNR for a point
     init_state_cov: float           # initial covariance for new tracks
     det_to_active_count: int        # DETECTION->ACTIVE transition hit count
     det_to_free_count: int          # DETECTION->FREE transition miss count

@@ -16,7 +16,7 @@ def configure_ax_db(ax):
 
 def configure_ax_gtrack(ax, tracks):
     ax.set_xlim(-70, 70)
-    ax.set_ylim(0, 150)
+    ax.set_ylim(0, 100)
     ax.autoscale(enable=False)
 
     for tr in tracks:

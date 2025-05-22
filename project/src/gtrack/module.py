@@ -1,6 +1,7 @@
 import numpy as np
 import time
 from math import *
+from sklearn.cluster import DBSCAN
 
 from .config import GTrackConfig2D
 from .units import GTrackUnit2D
@@ -73,58 +74,39 @@ class GTrackModule2D:
 
     def _allocate(self, points):
         cfg = self.config
-        seeds = [pt for pt in points if getattr(pt, 'assigned_id', -1) == -1 and getattr(pt, 'snr', 0) > 0]
-        seeds.sort(key=lambda pt: getattr(pt, 'snr', 0), reverse=True)
-        #print("Seed pools (unassigned points):")
-        #for pt in seeds:
-         #   print(f"  r={pt.range:.2f}, az={pt.azimuth:.2f}, v={pt.doppler:.2f}, snr={pt.snr:.1f}")
-        for seed in seeds:
-            if getattr(seed, '_clustered', False):
+        # select unassigned seeds
+        seeds = [pt for pt in points if pt.assigned_id == -1]
+        if not self.free or len(seeds) < cfg.min_cluster_points:
+            return
+
+        # build normalized feature array
+        X = np.array([[pt.range / cfg.alloc_range_gate,
+                       pt.azimuth / cfg.alloc_az_gate,
+                       pt.doppler / cfg.alloc_vel_gate]
+                      for pt in seeds])
+
+        # cluster using DBSCAN
+        db = DBSCAN(eps=1.0,
+                    min_samples=cfg.min_cluster_points,
+                    metric='euclidean',
+                    n_jobs=-1).fit(X)
+        labels = db.labels_
+
+        # allocate each cluster above your SNR threshold
+        for lab in set(labels):
+            if lab == -1 or not self.free:
                 continue
-            cluster = [seed]
-            seed._clustered = True
-            queue = [seed]
-            total_snr = getattr(seed, 'snr', 0)
-            while queue:
-                cur = queue.pop(0)
-                for pt in points:
-                    if getattr(pt, '_clustered', False) or getattr(pt, 'assigned_id', -1) != -1:
-                        continue
-                    dr = abs(pt.range - seed.range)
-                    #da = abs(pt.azimuth - seed.azimuth)
-                    da = abs(wrap_angle(pt.azimuth - seed.azimuth))
-                    dv = abs(pt.doppler - seed.doppler)
-                    if dr <= cfg.alloc_range_gate and da <= cfg.alloc_az_gate and dv <= cfg.alloc_vel_gate:
-                        pt._clustered = True
-                        queue.append(pt)
-                        cluster.append(pt)
-                        total_snr += getattr(pt, 'snr', 0)
-            for pt in cluster:
-                if hasattr(pt, '_clustered'):
-                    del pt._clustered
-            if len(cluster) < cfg.min_cluster_points or total_snr < cfg.alloc_snr_threshold:
+            idxs = np.where(labels == lab)[0]
+            total_snr = sum(seeds[i].snr for i in idxs)
+            if total_snr < cfg.alloc_snr_threshold:
                 continue
-            if not self.free:
-                break
+            cluster = [seeds[i] for i in idxs]
             unit = self.free.pop(0)
             unit.start(cluster)
             self.active.append(unit)
             for pt in cluster:
                 pt.assigned_id = unit.uid
                 pt.is_unique = True
-
-            #print(f"  → cluster size {len(cluster)}, total_snr={total_snr:.1f}")
-
-            # compute cluster centroid
-            #centroid_r = sum(pt.range for pt in cluster) / len(cluster)
-            #centroid_az = sum(pt.azimuth for pt in cluster) / len(cluster)
-
-            # decide accept/reject
-            #accepted = (len(cluster) >= cfg.min_cluster_points
-            #            and total_snr >= cfg.alloc_snr_threshold)
-
-            #print(f"  → cluster size={len(cluster)}, centroid=(r={centroid_r:.2f}, az={centroid_az:.2f}), "
-             #     f"total_snr={total_snr:.1f} → {'ACCEPTED' if accepted else 'REJECTED'}")
 
     def _reclaim(self, unit):
         self.active.remove(unit)

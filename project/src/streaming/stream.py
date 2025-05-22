@@ -6,7 +6,7 @@ import numpy as np
 def main():
 
     # Parameters for the range-azimuth beamforming
-    r_idxs = np.arange(0, 50)
+    r_idxs = np.arange(0, 80)
     phi = np.deg2rad(np.arange(0, 180, 1))
 
     # Radar  parameters
@@ -34,7 +34,7 @@ def main():
 
     # Parameters for Gtrack
     cfg_gtrack = GTrackConfig2D(
-        max_points=300,  # max detections per frame
+        max_points=200,  # max detections per frame
         max_tracks=5,  # max simultaneous tracks
         dt=0.5,  # time between frames (s)
         process_noise=0.5,  # Q spectral density
@@ -46,6 +46,7 @@ def main():
         alloc_vel_gate=20,  # cluster gate (m/s)
         min_cluster_points=10,  # you can increase if you want multi-point seeds
         alloc_snr_threshold=2,  # sum-SNR threshold
+        min_snr_threshold=0.5,  # min SNR for new track
         init_state_cov=1.0,  # starting P for new tracks
         det_to_active_count=15,  # hits needed to go ACTIVE
         det_to_free_count=2,  # misses to drop DETECTION

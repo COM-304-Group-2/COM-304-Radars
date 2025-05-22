@@ -60,7 +60,7 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, gtrack):
             # Substract the last fram and 0 the static clutter
             range_fft_s = range_fft - last_frame_fft
             range_fft_s[:,:, 0:10] = 0
-            range_fft_s[:, :, 100:150] = 0
+            range_fft_s[:, :, 70:150] = 0
             range_fft_s = range_fft_s[:, :, r_idxs]
             last_frame = beat_freq_data
 
@@ -80,7 +80,7 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, gtrack):
                 detection_tuned.append(d_t)
 
             # Keep only the strong detections
-            detection = [d for d in detection_tuned if d.snr >= 0.5]
+            detection = [d for d in detection_tuned if d.snr >= cfg_gtrack.min_snr_threshold]
 
             # Normalize the output
             bf_output = np.abs(bf_output)
