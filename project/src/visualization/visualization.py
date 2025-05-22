@@ -31,7 +31,7 @@ def configure_ax_gtrack(ax, tracks):
     # global (or module‐level) map:
     TRACK_COLORS = {}
     # pick whatever categorical palette you like
-    PALETTE = cm.get_cmap('tab10')
+    PALETTE = cm.get_cmap('Set2')
 
     def get_color_for_uid(uid):
         if uid not in TRACK_COLORS:
