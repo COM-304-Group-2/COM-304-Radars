@@ -6,7 +6,7 @@ import numpy as np
 def main():
 
     # Parameters for the range-azimuth beamforming
-    r_idxs = np.arange(0, 80)
+    r_idxs = np.arange(0, 150)
     phi = np.deg2rad(np.arange(0, 180, 1))
 
     # Radar  parameters
@@ -52,10 +52,11 @@ def main():
         det_to_free_count=2,  # misses to drop DETECTION
         act_to_free_count=8,  # misses to drop ACTIVE
         presence_zones=[],  # e.g. [PresenceZone2D(-10,10,-5,5)]
-        pres_on_count=5,
-        pres_off_count=3
+        pres_on_count=5, # frames to confirm presence on
+        pres_off_count=3 # frames to confirm presence off
     )
 
+    # Start the streaming process
     realtime_streaming.main(cfg_radar, cfg_gtrack, cfg_cfar)
 
 if __name__ == "__main__":

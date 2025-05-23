@@ -10,20 +10,20 @@ class GTrackUnit2D:
         self.F = F
         self.Q = Q
         self.uid = None
-        # state vectors
+
         self.state = np.zeros(cfg.state_dim)
         self.P = np.eye(cfg.state_dim) * cfg.init_state_cov
         self.apriori_state = np.zeros_like(self.state)
         self.apriori_P = np.zeros_like(self.P)
-        # measurement-space
+
         self.H = np.zeros((cfg.meas_dim, cfg.state_dim))
         self.S = np.zeros((cfg.meas_dim, cfg.meas_dim))
         self.S_inv = np.zeros_like(self.S)
-        # track lifecycle
+
         self.status = 'FREE'
         self.hit_count = 0
         self.miss_count = 0
-        # diagnostics
+
         self.dim = np.zeros(2)
         self.confidence = 0.0
 
@@ -34,28 +34,23 @@ class GTrackUnit2D:
         else:
             self.apriori_state = self.F @ self.state
             self.apriori_P = self.F @ self.P @ self.F.T + self.Q
-        # build measurement Jacobian, guard r=0
+
         x, y, vx, vy = self.apriori_state
         r = np.hypot(x, y)
         if r < 1e-6:
-            # avoid divide by zero: leave H unchanged
             return
         self.H = np.array([
             [x / r,      y / r,     0,  0],
             [-y / (r * r), x / (r * r), 0,  0],
         ], dtype=float)
 
-        #self.S, self.S_inv = calc_gating_limits_2d(self.apriori_P, self.H)
         R = np.diag([self.cfg.meas_noise_range, self.cfg.meas_noise_az])
         self.S, self.S_inv = calc_gating_limits_2d(self.apriori_P, self.H, R)
 
     def score(self, idx, point, best_score, best_id, second_score):
-        # measurement vector
         z = np.array([point.range, point.azimuth])
-        # predicted measurement
         r_pred, az_pred = cart2sph_2d(self.apriori_state[0], self.apriori_state[1])
 
-        #residual = z - np.array([r_pred, az_pred])
         residual = z - np.array([r_pred, wrap_angle(az_pred)])
         residual[1] = wrap_angle(residual[1])
 
@@ -69,10 +64,9 @@ class GTrackUnit2D:
                 second_score[idx] = m2
 
     def start(self, cluster):
-        # compute centroid in measurement space
         zs = np.array([[pt.range, pt.azimuth] for pt in cluster])
         mean_r, mean_az = zs.mean(axis=0)
-        # initialize state
+
         x, y = sph2cart_2d(mean_r, mean_az)
         seed = max(cluster, key=lambda pt: getattr(pt, 'snr', 0))
         #v = seed.doppler
@@ -99,7 +93,6 @@ class GTrackUnit2D:
         mean_z = zs.mean(axis=0)
         r_pred, az_pred = cart2sph_2d(self.apriori_state[0], self.apriori_state[1])
 
-        #residual = mean_z - np.array([r_pred, az_pred])
         residual = mean_z - np.array([r_pred, az_pred])
         residual[1] = wrap_angle(residual[1])
 

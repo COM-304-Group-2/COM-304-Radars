@@ -18,19 +18,16 @@ def configure_ax_db(ax):
 
 def configure_ax_gtrack(ax, tracks):
     ax.set_xlim(-70, 70)
-    ax.set_ylim(0, 100)
-    #ax.autoscale(enable=False)
+    ax.set_ylim(0, 150)
 
-    # filter only active tracks
+    # Filter active tracks
     active = [tr for tr in tracks if tr['status'] == 'ACTIVE']
 
-    # decide what you want to group by: here I'm using the track 'uid' as a "cluster ID";
-    # if you really have a separate tr['cluster'] field, swap out 'uid' for 'cluster' below
+    # Sort by UID
     ids = sorted({tr['uid'] for tr in active})
 
-    # global (or module‐level) map:
+    # Defined colormap
     TRACK_COLORS = {}
-    # pick whatever categorical palette you like
     PALETTE = cm.get_cmap('Set2')
 
     def get_color_for_uid(uid):
@@ -40,6 +37,7 @@ def configure_ax_gtrack(ax, tracks):
             TRACK_COLORS[uid] = PALETTE(next_idx)
         return TRACK_COLORS[uid]
 
+    # Draw each track
     for tr in tracks:
         x, y        = tr['pos']
         vx, vy      = tr['vel']
@@ -50,15 +48,15 @@ def configure_ax_gtrack(ax, tracks):
         if tr['status'] != 'ACTIVE':
             col = 'None'
 
-        # small filled circle with a black edge
+        # Draw circle for each track
         ax.scatter(x, y,
-                   s=500,             # small marker size
+                   s=500,
                    facecolor=col,
                    edgecolor=col_edge,
                    linewidth=3,
                    zorder=3)
 
-        # velocity arrow in same color
+        # Draw arrow for each track
         ax.quiver(x, y, vx, vy,
                   angles='xy',
                   scale_units='xy',
@@ -66,7 +64,7 @@ def configure_ax_gtrack(ax, tracks):
                   width=0.005,
                   color=col)
 
-    # build legend handles and place it to the right of the plot
+    # Build legend
     handles = [
         mpatches.Patch(color=get_color_for_uid(uid), label=str(uid))
         for uid in ids
@@ -77,6 +75,7 @@ def configure_ax_gtrack(ax, tracks):
               bbox_to_anchor=(1.02, 0.5),
               borderaxespad=0.0)
 
+    # Draw the axes
     ax.set_xlabel("X position")
     ax.set_ylabel("Y position)")
     ax.set_title("GTRACK 2D Tracks")

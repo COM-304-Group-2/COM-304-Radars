@@ -10,7 +10,6 @@ def cart2sph_2d(x, y):
 
 def calc_gating_limits_2d(P, H, R=None):
     if R is None:
-        # caller supplies measurement variance (range², az²)
         raise ValueError("R must be provided")
     S = H @ P @ H.T + R
     return S, np.linalg.inv(S)

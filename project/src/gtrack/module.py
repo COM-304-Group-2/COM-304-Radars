@@ -74,18 +74,18 @@ class GTrackModule2D:
 
     def _allocate(self, points):
         cfg = self.config
-        # select unassigned seeds
+        # Select unassigned seeds
         seeds = [pt for pt in points if pt.assigned_id == -1]
         if not self.free or len(seeds) < cfg.min_cluster_points:
             return
 
-        # build normalized feature array
+        # Build normalized feature array
         X = np.array([[pt.range / cfg.alloc_range_gate,
                        pt.azimuth / cfg.alloc_az_gate,
                        pt.doppler / cfg.alloc_vel_gate]
                       for pt in seeds])
 
-        # cluster using DBSCAN
+        # Cluster using DBSCAN
         db = DBSCAN(eps=1.0,
                     min_samples=cfg.min_cluster_points,
                     metric='euclidean',
