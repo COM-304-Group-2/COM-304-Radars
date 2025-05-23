@@ -71,7 +71,7 @@ def beamform_2d_s(beat_freq_data, radar_params, x_locs, dets):
         beamformed_signal = beat[np.newaxis, :] * phase_shifts
         sph_pwr[:, r] = np.maximum(sph_pwr[:, r], np.abs(np.sum(beamformed_signal, axis=-1)))
 
-        snr = np.abs(np.sum(beamformed_signal, axis=-1))**6 ## rajouter variance? #shape (num_phi)
+        snr = np.abs(np.sum(beamformed_signal, axis=-1))**8 ## rajouter variance? #shape (num_phi)
 
         rang = np.repeat(r, num_phi)
         #v = (d - N_dop/2) * vel_res

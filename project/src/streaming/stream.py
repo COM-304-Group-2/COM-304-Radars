@@ -45,8 +45,8 @@ def main():
         alloc_az_gate=np.deg2rad(10),  # cluster gate (rad)
         alloc_vel_gate=20,  # cluster gate (m/s)
         min_cluster_points=10,  # you can increase if you want multi-point seeds
-        alloc_snr_threshold=2,  # sum-SNR threshold
-        min_snr_threshold=0.5,  # min SNR for new track
+        alloc_snr_threshold=1,  # sum-SNR threshold
+        min_snr_threshold=0.01,  # min SNR for new track
         init_state_cov=1.0,  # starting P for new tracks
         det_to_active_count=15,  # hits needed to go ACTIVE
         det_to_free_count=2,  # misses to drop DETECTION

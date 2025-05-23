@@ -59,8 +59,8 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, gtrack):
 
             # Substract the last fram and 0 the static clutter
             range_fft_s = range_fft - last_frame_fft
-            range_fft_s[:,:, 0:10] = 0
-            range_fft_s[:, :, 70:150] = 0
+            range_fft_s[:,:, 0:20] = 0
+            range_fft_s[:, :, 120:150] = 0
             range_fft_s = range_fft_s[:, :, r_idxs]
             last_frame = beat_freq_data
 
@@ -87,7 +87,7 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, gtrack):
             #bf_output = median_filter(bf_output, size=(1, 1, 1))
             to_plot = bf_output
             to_plot /= np.max(to_plot)
-            to_plot = to_plot ** 6
+            to_plot = to_plot ** 8
 
             # Compute GTrack (optional)
             if gtrack:
