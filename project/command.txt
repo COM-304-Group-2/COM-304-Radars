@@ -1,3 +1,10 @@
+# radar_1
 sudo ifconfig en10 inet 192.168.33.30 netmask 255.255.255.0 up
+
+# radar_2
+sudo ifconfig en12 inet 192.168.33.31 netmask 255.255.255.0 up
+
 sudo lsof -iUDP -nP | grep 4096
 kill -9 4944
+ifconfig
+

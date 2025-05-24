@@ -10,7 +10,7 @@ from utils.utils import get_ant_pos_2d
 from processing.processing import compute_dbscan
 
 
-def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, gtrack):
+def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, gtrack, config_port, data_port, static_ip, adc_ip):
     # Parameters
     r_idxs = cfg_radar["range_idx"]
     phi = cfg_radar["phi"]
@@ -30,7 +30,7 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, gtrack):
 
     # Setup the DCA1000
     print("Starting DCA1000...")
-    dca = DCA1000()
+    dca = DCA1000(config_port=config_port, data_port=data_port, static_ip=static_ip, adc_ip=adc_ip)
     print("Reading data...")
 
     try:

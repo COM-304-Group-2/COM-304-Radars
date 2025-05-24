@@ -94,11 +94,11 @@ class DCA1000Config:
             "DCA1000DataPort": 4098,
         },
         "ethernetConfigUpdate": {
-            "systemIPAddress": "192.168.33.32",
-            "DCA1000IPAddress": "192.168.33.182",
+            "systemIPAddress": "192.168.33.30",
+            "DCA1000IPAddress": "192.168.33.180",
             "DCA1000MACAddress": "12-34-56-78-90-12",
             "DCA1000ConfigPort": 4096,
-            "DCA1000DataPort": 5000,
+            "DCA1000DataPort": 4098,
         },
     }
 
