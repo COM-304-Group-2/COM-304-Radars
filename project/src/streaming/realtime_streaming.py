@@ -94,10 +94,13 @@ class MyApp(ShowBase):
         return Task.cont
 
 def main(cfg_radar, cfg_gtrack, cfg_cfar, gtrack=True):
-    q_main = Queue(maxsize=1)  # ❗️ Only keep latest
-
-    producers = [Process(target=producer_real_time_1843, args=(q_main, cfg_radar, cfg_gtrack, cfg_cfar, gtrack), daemon=True)]
-    consumers = [Process(target=consumer, args=(q_main, cfg_radar), daemon=True)]
+    q_main_1 = Queue(maxsize=1)  # ❗️ Only keep latest
+    q_main_2 = Queue(maxsize=1)
+    #producers = [Process(target=producer_real_time_1843, args=(q_main, cfg_radar, cfg_gtrack, cfg_cfar, gtrack, 4099, 5000), daemon=True), Process(target=producer_real_time_1843, args=(q_main, cfg_radar, cfg_gtrack, cfg_cfar, gtrack, 4096, 4098), daemon=True),]
+    #consumers = [Process(target=consumer, args=(q_main, cfg_radar), daemon=True), Process(target=consumer, args=(q_main, cfg_radar), daemon=True)]
+    producers = [
+        Process(target=producer_real_time_1843, args=(q_main_1, cfg_radar, cfg_gtrack, cfg_cfar, gtrack, 4099, 5000, "192.168.33.32", "192.168.33.182"), daemon=True), Process(target=producer_real_time_1843, args=(q_main_2, cfg_radar, cfg_gtrack, cfg_cfar, gtrack, 4096, 4098, "192.168.33.30", "192.168.33.181"), daemon=True)]
+    consumers = [Process(target=consumer, args=(q_main_1, cfg_radar), daemon=True), Process(target=consumer, args=(q_main_2, cfg_radar), daemon=True)]
 
     for p in producers: p.start()
     for c in consumers: c.start()
