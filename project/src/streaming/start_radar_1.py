@@ -6,8 +6,6 @@ def main():
     # Initialize the DCA1000EVM
     print("Starting radar...")
     dca = dca1000.DCA1000()
-    dca.config.dca_ip = "192.168.33.180"
-    dca.config.dca_config_port = 4096
 
     # Initialize the radar
     cfg_file = "../configs/profile_super.cfg"

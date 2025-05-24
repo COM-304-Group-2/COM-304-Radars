@@ -1,14 +1,11 @@
 from mmwavecapture.radar import Radar
-from mmwavecapture import dca1000
+from mmwavecapture import dca1000_2
 
 def main():
 
     # Initialize the DCA1000EVM
     print("Starting radar...")
-    dca = dca1000.DCA1000()
-    dca.config.dca_ip = "192.168.33.181"
-    dca.config.dca_config_port = 4096
-    dca.config.dca_data_port = 5000
+    dca = dca1000_2.DCA1000()
 
     # Initialize the radar
     cfg_file = "../configs/profile_super.cfg"
@@ -29,7 +26,14 @@ def main():
     if not dca.system_connection():
         raise RuntimeError(f"DCA1000EVM connection error at {4096}")
 
+    #dca.config.dca_config_port = 4096
+    #dca.config.dca_data_port = 5000
+    #dca.config.dca_ip = "192.168.33.181"
+
     # Initialize DCA1000EVM
+    #status = dca.config_eeprom()
+    #print(status)
+    #print("config_eeprom done")
     dca.reset_fpga()
     dca.config_fpga()
     dca.config_packet_delay()

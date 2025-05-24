@@ -88,10 +88,10 @@ class DCA1000Config:
         "dataFormatMode": 3,
         "packetDelay_us": 5,
         "ethernetConfig": {
-            "systemIPAddress": "192.168.33.30",
-            "DCA1000IPAddress": "192.168.33.180",
+            "systemIPAddress": "192.168.33.32",
+            "DCA1000IPAddress": "192.168.33.182",
             "DCA1000ConfigPort": 4096,
-            "DCA1000DataPort": 4098,
+            "DCA1000DataPort": 5000,
         },
         "ethernetConfigUpdate": {
             "systemIPAddress": "192.168.33.32",
