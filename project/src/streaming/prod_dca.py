@@ -10,7 +10,7 @@ from utils.utils import get_ant_pos_2d
 from processing.processing import compute_dbscan
 
 
-def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, gtrack, config_port, data_port, static_ip, adc_ip):
+def producer_real_time_1843(q, cfg_radar, cfg_cfar, config_port, data_port, static_ip, adc_ip):
     # Parameters
     r_idxs = cfg_radar["range_idx"]
     phi = cfg_radar["phi"]
@@ -20,10 +20,6 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, gtrack, config_p
     adc_samples = cfg_radar["num_range"]
 
     last_frame = np.zeros((num_rx * num_tx, chirp_loops, adc_samples), dtype=np.complex64)
-    gtrack_output = []
-
-    # Initialize the GTrack module
-    tracker = GTrackModule2D(cfg_gtrack)
 
     # Get the antenna positions
     x_locs, _, _ = get_ant_pos_2d(num_tx*num_rx, adc_samples, num_rx)
@@ -71,16 +67,16 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, gtrack, config_p
             bf_output, detection = beamform_2d_s(range_fft_s, cfg_radar, x_locs[:,0], dets)
 
             # Compute the SNR
-            snrs = np.array([d.snr for d in detection])
-            snrs_max = np.max(snrs)
-            detection_tuned = []
-            for d in detection:
-                d_t = d
-                d_t.snr = d_t.snr / snrs_max
-                detection_tuned.append(d_t)
+            #snrs = np.array([d.snr for d in detection])
+            #snrs_max = np.max(snrs)
+            #detection_tuned = []
+            #for d in detection:
+            #    d_t = d
+            #    d_t.snr = d_t.snr / snrs_max
+            #    detection_tuned.append(d_t)
 
             # Keep only the strong detections
-            detection = [d for d in detection_tuned if d.snr >= cfg_gtrack.min_snr_threshold]
+            #detection = [d for d in detection_tuned if d.snr >= cfg_gtrack.min_snr_threshold]
 
             # Normalize the output
             bf_output = np.abs(bf_output)
@@ -90,12 +86,12 @@ def producer_real_time_1843(q, cfg_radar, cfg_gtrack, cfg_cfar, gtrack, config_p
             to_plot = to_plot ** 8
 
             # Compute GTrack (optional)
-            if gtrack:
-                gtrack_output = tracker.step(detection)
+            #if gtrack:
+            #    gtrack_output = tracker.step(detection)
 
             # Send the data to the queue
             try:
-                q.put_nowait(("bev", (to_plot, gtrack_output)))
+                q.put_nowait(("bev", (to_plot)))
             except queue.Full:
                 continue
 

@@ -2,12 +2,25 @@ import numpy as np
 import matplotlib.cm as cm
 import matplotlib.patches as mpatches
 
-def configure_ax_bf(ax):
+def configure_ax_bf(ax, phi, r, vmin=0, vmax=0.1):
     ax.set_theta_zero_location('E')
     ax.set_theta_direction(1)
     ax.set_thetamin(0)
     ax.set_thetamax(180)
     ax.set_title("Bird Eye View (Top View)")
+
+    R, Theta = np.meshgrid(r, phi)
+
+    ax.set_xlim(phi[0], phi[-1])
+    ax.set_ylim(r[0], r[-1])
+    ax.grid(False)
+
+    num_phi = len(phi)
+    data = np.zeros((num_phi, r.shape[0]), dtype=np.float64)
+
+    im = ax.pcolormesh(Theta, R, data, shading='nearest', cmap='jet', vmin=vmin, vmax=vmax)
+
+    return im
 
 
 def configure_ax_db(ax):
