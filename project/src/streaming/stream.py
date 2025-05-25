@@ -6,7 +6,7 @@ import numpy as np
 def main():
 
     # Parameters for the range-azimuth beamforming
-    r_idxs = np.arange(0, 150)
+    r_idxs = np.arange(0, 60)
     phi = np.deg2rad(np.arange(0, 180, 1))
 
     # Radar  parameters

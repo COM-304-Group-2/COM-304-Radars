@@ -81,9 +81,9 @@ def producer_real_time_1843(q, cfg_radar, cfg_cfar, config_port, data_port, stat
             # Normalize the output
             bf_output = np.abs(bf_output)
             #bf_output = median_filter(bf_output, size=(1, 1, 1))
-            to_plot = bf_output
-            to_plot /= np.max(to_plot)
-            to_plot = to_plot ** 8
+            #to_plot = bf_output
+            #to_plot /= np.max(to_plot)
+            #to_plot = to_plot ** 8
 
             # Compute GTrack (optional)
             #if gtrack:
@@ -91,7 +91,7 @@ def producer_real_time_1843(q, cfg_radar, cfg_cfar, config_port, data_port, stat
 
             # Send the data to the queue
             try:
-                q.put_nowait(("bev", (to_plot)))
+                q.put_nowait(("bev", (bf_output)))
             except queue.Full:
                 continue
 

@@ -49,6 +49,10 @@ class MyApp(ShowBase):
         self.ax_2 = self.fig_2.add_subplot(111, projection='polar')
         self.im_2 = configure_ax_bf(self.ax_2, self.phi, self.r_idxs)
 
+        self.fig_3 = plt.figure(figsize=(6, 6))
+        self.ax_3 = self.fig_3.add_subplot(111, projection='polar')
+        self.im_3 = configure_ax_bf(self.ax_3, self.phi, self.r_idxs)
+
         #self.fig_3 = plt.figure(figsize=(8, 6), constrained_layout=True)
         #self.ax_3 = self.fig_3.add_subplot(111)
 
@@ -60,20 +64,19 @@ class MyApp(ShowBase):
 
         self.taskMgr.add(self.updateTask, "updateTask")
 
-        # once, up front:
-        self.x = np.arange(0, 150, 1)
-        self.y = np.arange(0, 150, 1)
+        self.x1, self.y1 = 0.0, 0.0
+        self.x2, self.y2 = 0.0, 0.0  # meters, for example
+
+        self.x = np.arange(-60, 60, 1)
+        self.y = np.arange(-60, 60, 1)
         self.X, self.Y = np.meshgrid(self.x, self.y, indexing='xy')
 
-        # flatten
         x_flat = self.X.ravel()
         y_flat = self.Y.ravel()
 
-        # polar coords of each Cartesian pixel
         phi_flat = np.arctan2(y_flat, x_flat)
         r_flat = np.hypot(x_flat, y_flat)
 
-        # stack into (n_pts,2) for interpolation calls
         self.cart2pol = np.column_stack((phi_flat, r_flat))
 
 
@@ -96,8 +99,17 @@ class MyApp(ShowBase):
             bf_1 = self.latest_msg[0]
             bf_2 = self.latest_msg[1]
 
+            phi1 = np.arctan2((self.Y - self.y1).ravel(), (self.X - self.x1).ravel())
+            r1 = np.hypot(self.X.ravel() - self.x1, self.Y.ravel() - self.y1)
+            cart2pol1 = np.column_stack((phi1, r1))
+
+            phi2 = np.arctan2((self.Y - self.y2).ravel(), (self.X - self.x2).ravel())
+            r2 = np.hypot(self.X.ravel() - self.x2, self.Y.ravel() - self.y2)
+            cart2pol2 = np.column_stack((phi2, r2))
+
+            # build your fast polar→Cartesian interpolators
             interp1 = RegularGridInterpolator(
-                (self.phi, self.r_idxs),  # axis 0 = φ, axis 1 = r
+                (self.phi, self.r_idxs),  # φ axis, r axis
                 bf_1,
                 method='linear', bounds_error=False, fill_value=0
             )
@@ -107,12 +119,12 @@ class MyApp(ShowBase):
                 method='linear', bounds_error=False, fill_value=0
             )
 
-            # sample both in one go
-            Z1 = interp1(self.cart2pol).reshape(self.X.shape)
-            Z2 = interp2(self.cart2pol).reshape(self.X.shape)
+            # sample at every global (x,y) for each radar
+            Z1 = interp1(cart2pol1).reshape(self.X.shape)
+            Z2 = interp2(cart2pol2).reshape(self.X.shape)
 
             # Fuse
-            Z_cart = 0.5 * (Z1 + Z2)
+            Z_cart = (Z1 * Z2)
 
             # Build a Cartesian->grid interpolator once for the fused map
             interp_cart2pol = RegularGridInterpolator(
@@ -131,11 +143,67 @@ class MyApp(ShowBase):
             ))
             Z_polar = interp_cart2pol(pts_back).reshape(PHI.shape)
 
+            # Build a Cartesian->grid interpolator once for the first radar
+            interp_cart2pol = RegularGridInterpolator(
+                (self.y, self.x),  # note order (row=y, col=x)
+                Z1,
+                method='linear',
+                bounds_error=False,
+                fill_value=0
+            )
+
+            # Sample back on your original polar mesh
+            PHI, R = np.meshgrid(self.phi, self.r_idxs, indexing='ij')
+            pts_back = np.column_stack((
+                (R * np.sin(PHI)).ravel(),  # y
+                (R * np.cos(PHI)).ravel()  # x
+            ))
+            Z1_polar = interp_cart2pol(pts_back).reshape(PHI.shape)
+
+            # Build a Cartesian->grid interpolator once for the second radar
+            interp_cart2pol = RegularGridInterpolator(
+                (self.y, self.x),  # note order (row=y, col=x)
+                Z2,
+                method='linear',
+                bounds_error=False,
+                fill_value=0
+            )
+
+            # Sample back on your original polar mesh
+            PHI, R = np.meshgrid(self.phi, self.r_idxs, indexing='ij')
+            pts_back = np.column_stack((
+                (R * np.sin(PHI)).ravel(),  # y
+                (R * np.cos(PHI)).ravel()  # x
+            ))
+            Z2_polar = interp_cart2pol(pts_back).reshape(PHI.shape)
+
+            # Normalize the output
+            to_plot = np.abs(Z_polar)
+            to_plot = to_plot
+            to_plot /= np.max(to_plot)
+            to_plot = to_plot ** 8
+
+            to_plot_1 = np.abs(Z1_polar)
+            to_plot_1 = to_plot_1
+            to_plot_1 /= np.max(to_plot_1)
+            to_plot_1 = to_plot_1 ** 8
+
+            to_plot_2 = np.abs(Z2_polar)
+            to_plot_2 = to_plot_2
+            to_plot_2 /= np.max(to_plot_2)
+            to_plot_2 = to_plot_2** 8
+
+
+            # bf_output = np.abs(Z_polar)
+
+            #bf_2 /= np.max(bf_2)
+            #bf_2 = bf_2 ** 8
 
 
             # Update the beamforming plot
-            self.im.set_array(Z_polar.ravel())
-            self.im_2.set_array(bf_2.ravel())
+            self.im.set_array(to_plot.ravel())
+            self.im_2.set_array(to_plot_1.ravel())
+            self.im_3.set_array(to_plot_2.ravel())
 
             #self.ax_2.clear()
             #configure_ax_bf(self.ax_2)
@@ -160,6 +228,7 @@ class MyApp(ShowBase):
             # Update the figure
             self.fig.canvas.draw_idle()
             self.fig_2.canvas.draw_idle()
+            self.fig_3.canvas.draw_idle()
 
             QtWidgets.QApplication.processEvents()
 
