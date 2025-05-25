@@ -4,6 +4,10 @@ warnings.simplefilter("ignore", UserWarning)
 sys.coinit_flags = 2
 
 import time
+import numpy as np
+from scipy.interpolate import griddata
+from scipy.interpolate import RegularGridInterpolator
+
 from multiprocessing import Process, Queue
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
@@ -18,7 +22,7 @@ loadPrcFileData('', 'window-type none')   # no native GL window
 from PyQt5 import QtWidgets
 
 from .prod_dca import producer_real_time_1843
-from visualization.visualization import configure_ax_bf, configure_ax_db, configure_ax_gtrack, plot_2d_heatmap
+from visualization.visualization import configure_ax_bf, configure_ax_db, configure_ax_gtrack
 
 
 def consumer(q1, q2, cfg_radar):
@@ -56,6 +60,22 @@ class MyApp(ShowBase):
 
         self.taskMgr.add(self.updateTask, "updateTask")
 
+        # once, up front:
+        self.x = np.arange(0, 150, 1)
+        self.y = np.arange(0, 150, 1)
+        self.X, self.Y = np.meshgrid(self.x, self.y, indexing='xy')
+
+        # flatten
+        x_flat = self.X.ravel()
+        y_flat = self.Y.ravel()
+
+        # polar coords of each Cartesian pixel
+        phi_flat = np.arctan2(y_flat, x_flat)
+        r_flat = np.hypot(x_flat, y_flat)
+
+        # stack into (n_pts,2) for interpolation calls
+        self.cart2pol = np.column_stack((phi_flat, r_flat))
+
 
     def updateTask(self, task):
         try:
@@ -76,12 +96,46 @@ class MyApp(ShowBase):
             bf_1 = self.latest_msg[0]
             bf_2 = self.latest_msg[1]
 
+            interp1 = RegularGridInterpolator(
+                (self.phi, self.r_idxs),  # axis 0 = φ, axis 1 = r
+                bf_1,
+                method='linear', bounds_error=False, fill_value=0
+            )
+            interp2 = RegularGridInterpolator(
+                (self.phi, self.r_idxs),
+                bf_2,
+                method='linear', bounds_error=False, fill_value=0
+            )
+
+            # sample both in one go
+            Z1 = interp1(self.cart2pol).reshape(self.X.shape)
+            Z2 = interp2(self.cart2pol).reshape(self.X.shape)
+
+            # Fuse
+            Z_cart = 0.5 * (Z1 + Z2)
+
+            # Build a Cartesian->grid interpolator once for the fused map
+            interp_cart2pol = RegularGridInterpolator(
+                (self.y, self.x),  # note order (row=y, col=x)
+                Z_cart,
+                method='linear',
+                bounds_error=False,
+                fill_value=0
+            )
+
+            # Sample back on your original polar mesh
+            PHI, R = np.meshgrid(self.phi, self.r_idxs, indexing='ij')
+            pts_back = np.column_stack((
+                (R * np.sin(PHI)).ravel(),  # y
+                (R * np.cos(PHI)).ravel()  # x
+            ))
+            Z_polar = interp_cart2pol(pts_back).reshape(PHI.shape)
+
+
+
             # Update the beamforming plot
-            #self.ax.clear()
-            #configure_ax_bf(self.ax)
-            #plot_2d_heatmap(self.ax, bf_1, self.phi, self.r_idxs, vmin=0, vmax=0.1)
-            self.im.set_array(bf_1.ravel())
-            self.im_2.set_array(bf_1.ravel())
+            self.im.set_array(Z_polar.ravel())
+            self.im_2.set_array(bf_2.ravel())
 
             #self.ax_2.clear()
             #configure_ax_bf(self.ax_2)
@@ -104,11 +158,7 @@ class MyApp(ShowBase):
             self.fps_text.set_text(f"FPS: {self.fps:.2f}")
 
             # Update the figure
-            #self.fig.canvas.draw()
-            #self.fig_2.canvas.draw()
-            #self.fig.canvas.flush_events()
-            #self.fig_2.canvas.flush_events()
-            self.fig.canvas.draw_idle()  # schedules paint, returns immediately
+            self.fig.canvas.draw_idle()
             self.fig_2.canvas.draw_idle()
 
             QtWidgets.QApplication.processEvents()
@@ -124,10 +174,10 @@ class MyApp(ShowBase):
 def main(cfg_radar, cfg_gtrack, cfg_cfar, gtrack=True):
     q_main_1 = Queue(maxsize=1)  # ❗️ Only keep latest
     q_main_2 = Queue(maxsize=1)
-    #producers = [Process(target=producer_real_time_1843, args=(q_main, cfg_radar, cfg_gtrack, cfg_cfar, gtrack, 4099, 5000), daemon=True), Process(target=producer_real_time_1843, args=(q_main, cfg_radar, cfg_gtrack, cfg_cfar, gtrack, 4096, 4098), daemon=True),]
-    #consumers = [Process(target=consumer, args=(q_main, cfg_radar), daemon=True), Process(target=consumer, args=(q_main, cfg_radar), daemon=True)]
+
     producers = [
-        Process(target=producer_real_time_1843, args=(q_main_1, cfg_radar, cfg_cfar, 4099, 5000, "192.168.33.32", "192.168.33.182"), daemon=True), Process(target=producer_real_time_1843, args=(q_main_2, cfg_radar, cfg_cfar, 4096, 4098, "192.168.33.30", "192.168.33.181"), daemon=True)]
+        Process(target=producer_real_time_1843, args=(q_main_1, cfg_radar, cfg_cfar, 4099, 5000, "192.168.33.32", "192.168.33.182"), daemon=True),
+        Process(target=producer_real_time_1843, args=(q_main_2, cfg_radar, cfg_cfar, 4096, 4098, "192.168.33.30", "192.168.33.181"), daemon=True)]
     consumers = [Process(target=consumer, args=(q_main_1, q_main_2, cfg_radar), daemon=True)]
 
     for p in producers: p.start()
