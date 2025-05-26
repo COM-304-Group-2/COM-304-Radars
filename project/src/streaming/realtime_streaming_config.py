@@ -53,9 +53,6 @@ class MyApp(ShowBase):
         self.ax_3 = self.fig_3.add_subplot(111, projection='polar')
         self.im_3 = configure_ax_bf(self.ax_3, self.phi, self.r_idxs)
 
-        #self.fig_3 = plt.figure(figsize=(8, 6), constrained_layout=True)
-        #self.ax_3 = self.fig_3.add_subplot(111)
-
         self.last_frame_time = time.time()
         self.frame_counter = 0
         self.fps = 0
@@ -193,26 +190,10 @@ class MyApp(ShowBase):
             to_plot_2 /= np.max(to_plot_2)
             to_plot_2 = to_plot_2** 8
 
-
-            # bf_output = np.abs(Z_polar)
-
-            #bf_2 /= np.max(bf_2)
-            #bf_2 = bf_2 ** 8
-
-
             # Update the beamforming plot
             self.im.set_array(to_plot.ravel())
             self.im_2.set_array(to_plot_1.ravel())
             self.im_3.set_array(to_plot_2.ravel())
-
-            #self.ax_2.clear()
-            #configure_ax_bf(self.ax_2)
-            #plot_2d_heatmap(self.ax_2, bf_2, self.phi, self.r_idxs, vmin=0, vmax=0.1)
-
-            # Update the gtrack plot
-            #self.ax_3.clear()
-            #tracks = gtrack['tracks']
-            #configure_ax_gtrack(self.ax_3, tracks)
 
             # FPS tracking
             current_time = time.time()
