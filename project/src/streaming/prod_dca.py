@@ -10,7 +10,7 @@ from utils.utils import get_ant_pos_2d
 from processing.processing import compute_dbscan
 
 
-def producer_real_time_1843(q, cfg_radar, cfg_cfar, cfg_gtrack,config_port, data_port, static_ip, adc_ip):
+def producer_real_time_1843(q, cfg_radar, cfg_cfar, config_port, data_port, static_ip, adc_ip):
     # Parameters
     r_idxs = cfg_radar["range_idx"]
     phi = cfg_radar["phi"]
@@ -28,8 +28,6 @@ def producer_real_time_1843(q, cfg_radar, cfg_cfar, cfg_gtrack,config_port, data
     print("Starting DCA1000...")
     dca = DCA1000(config_port=config_port, data_port=data_port, static_ip=static_ip, adc_ip=adc_ip)
     print("Reading data...")
-
-    tracker = GTrackModule2D(cfg_gtrack)
 
     try:
         while True:
@@ -69,31 +67,31 @@ def producer_real_time_1843(q, cfg_radar, cfg_cfar, cfg_gtrack,config_port, data
             bf_output, detection = beamform_2d_s(range_fft_s, cfg_radar, x_locs[:,0], dets)
 
             # Compute the SNR
-            snrs = np.array([d.snr for d in detection])
-            snrs_max = np.max(snrs)
-            detection_tuned = []
-            for d in detection:
-                d_t = d
-                d_t.snr = d_t.snr / snrs_max
-                detection_tuned.append(d_t)
+            #snrs = np.array([d.snr for d in detection])
+            #snrs_max = np.max(snrs)
+            #detection_tuned = []
+            #for d in detection:
+            #    d_t = d
+            #    d_t.snr = d_t.snr / snrs_max
+            #    detection_tuned.append(d_t)
 
             # Keep only the strong detections
-            detection = [d for d in detection_tuned if d.snr >= cfg_gtrack.min_snr_threshold]
+            #detection = [d for d in detection_tuned if d.snr >= cfg_gtrack.min_snr_threshold]
 
             # Normalize the output
             bf_output = np.abs(bf_output)
             #bf_output = median_filter(bf_output, size=(1, 1, 1))
-            to_plot = bf_output
-            to_plot /= np.max(to_plot)
-            to_plot = to_plot ** 8
+            #to_plot = bf_output
+            #to_plot /= np.max(to_plot)
+            #to_plot = to_plot ** 8
 
             # Compute GTrack (optional)
             #if gtrack:
-            gtrack_output = tracker.step(detection)
+            #    gtrack_output = tracker.step(detection)
 
             # Send the data to the queue
             try:
-                q.put_nowait(("bev", (to_plot, gtrack_output)))
+                q.put_nowait(("bev", (bf_output)))
             except queue.Full:
                 continue
 
