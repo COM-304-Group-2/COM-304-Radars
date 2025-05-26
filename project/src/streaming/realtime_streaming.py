@@ -65,7 +65,7 @@ class MyApp(ShowBase):
         self.taskMgr.add(self.updateTask, "updateTask")
 
         self.x1, self.y1 = 0.0, 0.0
-        self.x2, self.y2 = 0.0, 0.0  # meters, for example
+        self.x2, self.y2 = 0.0, 0.0
 
         self.x = np.arange(-60, 60, 1)
         self.y = np.arange(-60, 60, 1)
