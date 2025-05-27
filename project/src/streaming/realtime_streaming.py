@@ -57,7 +57,7 @@ class MyApp(ShowBase):
         self.frame_counter = 0
         self.fps = 0
         self.last_fps_time = time.time()
-        self.fps_text = self.ax.text(0.02, 1.02, "", transform=self.ax.transAxes, fontsize=10, color='blue')
+        self.fps_text = self.ax_3.text(0.00, 1.05, "", transform=self.ax_3.transAxes, fontsize=10, color='blue')
 
         self.taskMgr.add(self.updateTask, "updateTask")
 
