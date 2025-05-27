@@ -33,8 +33,8 @@ def configure_ax_gtrack(ax):
     ax.set_ylim(0, 150)
     # Draw the axes
     ax.set_xlabel("X position")
-    ax.set_ylabel("Y position)")
-    ax.set_title("GTRACK 2D Tracks")
+    ax.set_ylabel("Y position")
+    ax.set_title("GTRACK")
     ax.grid(True)
 
 def update_ax_gtrack(ax, tracks, last_artists):
