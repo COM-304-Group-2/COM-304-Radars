@@ -23,14 +23,17 @@ from PyQt5 import QtWidgets
 
 from .prod_dca import producer_real_time_1843
 from visualization.visualization import configure_ax_bf, configure_ax_db, configure_ax_gtrack
+from utils.utils_streaming import cart2pol
+from gtrack.config import Detection
+from gtrack.module import GTrackModule2D
 
 
-def consumer(q1, q2, cfg_radar):
-    app = MyApp(q1, q2, cfg_radar)
+def consumer(q1, q2, cfg_radar, cfg_gtrack):
+    app = MyApp(q1, q2, cfg_radar, cfg_gtrack)
     app.run()
 
 class MyApp(ShowBase):
-    def __init__(self, queue_1, queue_2, cfg_radar):
+    def __init__(self, queue_1, queue_2, cfg_radar, cfg_gtrack):
         ShowBase.__init__(self)
         self.q1 = queue_1
         self.q2 = queue_2
@@ -45,16 +48,8 @@ class MyApp(ShowBase):
         self.ax = self.fig.add_subplot(111, projection='polar')
         self.im = configure_ax_bf(self.ax, self.phi, self.r_idxs)
 
-        self.fig_2 = plt.figure(figsize=(6, 6))
-        self.ax_2 = self.fig_2.add_subplot(111, projection='polar')
-        self.im_2 = configure_ax_bf(self.ax_2, self.phi, self.r_idxs)
-
-        self.fig_3 = plt.figure(figsize=(6, 6))
-        self.ax_3 = self.fig_3.add_subplot(111, projection='polar')
-        self.im_3 = configure_ax_bf(self.ax_3, self.phi, self.r_idxs)
-
-        #self.fig_3 = plt.figure(figsize=(8, 6), constrained_layout=True)
-        #self.ax_3 = self.fig_3.add_subplot(111)
+        self.fig_3 = plt.figure(figsize=(8, 6), constrained_layout=True)
+        self.ax_3 = self.fig_3.add_subplot(111)
 
         self.last_frame_time = time.time()
         self.frame_counter = 0
@@ -71,13 +66,9 @@ class MyApp(ShowBase):
         self.y = np.arange(-60, 60, 1)
         self.X, self.Y = np.meshgrid(self.x, self.y, indexing='xy')
 
-        x_flat = self.X.ravel()
-        y_flat = self.Y.ravel()
+        self.cart2pol = cart2pol(self.X.ravel(), self.Y.ravel())
 
-        phi_flat = np.arctan2(y_flat, x_flat)
-        r_flat = np.hypot(x_flat, y_flat)
-
-        self.cart2pol = np.column_stack((phi_flat, r_flat))
+        self.tracker = GTrackModule2D(cfg_gtrack)
 
 
     def updateTask(self, task):
@@ -143,55 +134,27 @@ class MyApp(ShowBase):
             ))
             Z_polar = interp_cart2pol(pts_back).reshape(PHI.shape)
 
-            # Build a Cartesian->grid interpolator once for the first radar
-            interp_cart2pol = RegularGridInterpolator(
-                (self.y, self.x),  # note order (row=y, col=x)
-                Z1,
-                method='linear',
-                bounds_error=False,
-                fill_value=0
-            )
-
-            # Sample back on your original polar mesh
-            PHI, R = np.meshgrid(self.phi, self.r_idxs, indexing='ij')
-            pts_back = np.column_stack((
-                (R * np.sin(PHI)).ravel(),  # y
-                (R * np.cos(PHI)).ravel()  # x
-            ))
-            Z1_polar = interp_cart2pol(pts_back).reshape(PHI.shape)
-
-            # Build a Cartesian->grid interpolator once for the second radar
-            interp_cart2pol = RegularGridInterpolator(
-                (self.y, self.x),  # note order (row=y, col=x)
-                Z2,
-                method='linear',
-                bounds_error=False,
-                fill_value=0
-            )
-
-            # Sample back on your original polar mesh
-            PHI, R = np.meshgrid(self.phi, self.r_idxs, indexing='ij')
-            pts_back = np.column_stack((
-                (R * np.sin(PHI)).ravel(),  # y
-                (R * np.cos(PHI)).ravel()  # x
-            ))
-            Z2_polar = interp_cart2pol(pts_back).reshape(PHI.shape)
-
             # Normalize the output
             to_plot = np.abs(Z_polar)
             to_plot = to_plot
             to_plot /= np.max(to_plot)
             to_plot = to_plot ** 8
 
-            to_plot_1 = np.abs(Z1_polar)
-            to_plot_1 = to_plot_1
-            to_plot_1 /= np.max(to_plot_1)
-            to_plot_1 = to_plot_1 ** 8
+            #print(len(self.r_idxs))
 
-            to_plot_2 = np.abs(Z2_polar)
-            to_plot_2 = to_plot_2
-            to_plot_2 /= np.max(to_plot_2)
-            to_plot_2 = to_plot_2** 8
+            threshold = 0.01
+            detections = [
+                Detection(r=self.r_idxs[i], az=self.phi[j], v=0, snr=to_plot[j, i])
+                for i in range(len(self.r_idxs))
+                for j in range(len(self.phi))
+                if to_plot[j, i] >= threshold
+            ]
+
+            gtrack_output = self.tracker.step(detections)
+
+
+
+
 
 
             # bf_output = np.abs(Z_polar)
@@ -202,17 +165,15 @@ class MyApp(ShowBase):
 
             # Update the beamforming plot
             self.im.set_array(to_plot.ravel())
-            self.im_2.set_array(to_plot_1.ravel())
-            self.im_3.set_array(to_plot_2.ravel())
 
             #self.ax_2.clear()
             #configure_ax_bf(self.ax_2)
             #plot_2d_heatmap(self.ax_2, bf_2, self.phi, self.r_idxs, vmin=0, vmax=0.1)
 
             # Update the gtrack plot
-            #self.ax_3.clear()
-            #tracks = gtrack['tracks']
-            #configure_ax_gtrack(self.ax_3, tracks)
+            self.ax_3.clear()
+            tracks = gtrack_output['tracks']
+            configure_ax_gtrack(self.ax_3, tracks)
 
             # FPS tracking
             current_time = time.time()
@@ -227,7 +188,7 @@ class MyApp(ShowBase):
 
             # Update the figure
             self.fig.canvas.draw_idle()
-            self.fig_2.canvas.draw_idle()
+            #self.fig_2.canvas.draw_idle()
             self.fig_3.canvas.draw_idle()
 
             QtWidgets.QApplication.processEvents()
@@ -247,7 +208,7 @@ def main(cfg_radar, cfg_gtrack, cfg_cfar, gtrack=True):
     producers = [
         Process(target=producer_real_time_1843, args=(q_main_1, cfg_radar, cfg_cfar, 4099, 5000, "192.168.33.32", "192.168.33.182"), daemon=True),
         Process(target=producer_real_time_1843, args=(q_main_2, cfg_radar, cfg_cfar, 4096, 4098, "192.168.33.30", "192.168.33.181"), daemon=True)]
-    consumers = [Process(target=consumer, args=(q_main_1, q_main_2, cfg_radar), daemon=True)]
+    consumers = [Process(target=consumer, args=(q_main_1, q_main_2, cfg_radar, cfg_gtrack), daemon=True)]
 
     for p in producers: p.start()
     for c in consumers: c.start()
