@@ -42,8 +42,6 @@ class MyApp(ShowBase):
         self.phi = cfg_radar["phi"]
         self.r_idxs = cfg_radar["range_idx"]
 
-        #plt.ion() # Plus lent ??
-
         self.fig = plt.figure(figsize=(6, 6))
         self.ax = self.fig.add_subplot(111, projection='polar')
         self.im = configure_ax_bf(self.ax, self.phi, self.r_idxs)
@@ -144,10 +142,7 @@ class MyApp(ShowBase):
             to_plot /= np.max(to_plot)
             to_plot = to_plot ** 8
 
-            #print(len(self.r_idxs))
-
-
-
+            # Convert map to Detections points
             threshold = 0.01
             detections = [
                 Detection(r=self.r_idxs[i], az=self.phi[j], v=0, snr=to_plot[j, i])
@@ -156,29 +151,13 @@ class MyApp(ShowBase):
                 if to_plot[j, i] >= threshold
             ]
 
-
+            # Run GTrack
             gtrack_output = self.tracker.step(detections)
-
-
-
-
-
-
-            # bf_output = np.abs(Z_polar)
-
-            #bf_2 /= np.max(bf_2)
-            #bf_2 = bf_2 ** 8
-
 
             # Update the beamforming plot
             self.im.set_array(to_plot.ravel())
 
-            #self.ax_2.clear()
-            #configure_ax_bf(self.ax_2)
-            #plot_2d_heatmap(self.ax_2, bf_2, self.phi, self.r_idxs, vmin=0, vmax=0.1)
-
             # Update the gtrack plot
-            #self.ax_3.clear()
             tracks = gtrack_output['tracks']
             update_ax_gtrack(self.ax_3, tracks, self.last_artists)
 
@@ -195,11 +174,10 @@ class MyApp(ShowBase):
 
             # Update the figure
             self.fig.canvas.draw_idle()
-            #self.fig_2.canvas.draw_idle()
             self.fig_3.canvas.draw_idle()
 
+            # Redraw the canvas
             QtWidgets.QApplication.processEvents()
-
 
             # Reset the message count
             self.msg_count.clear()

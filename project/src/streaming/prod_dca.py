@@ -13,7 +13,6 @@ from processing.processing import compute_dbscan
 def producer_real_time_1843(q, cfg_radar, cfg_cfar, config_port, data_port, static_ip, adc_ip):
     # Parameters
     r_idxs = cfg_radar["range_idx"]
-    phi = cfg_radar["phi"]
     num_tx = cfg_radar["num_tx"]
     num_rx = cfg_radar["num_rx"]
     chirp_loops = cfg_radar["num_doppler"]
@@ -69,9 +68,6 @@ def producer_real_time_1843(q, cfg_radar, cfg_cfar, config_port, data_port, stat
 
             # Compute beamforming
             bf_output = beamform_2d_s(range_fft_s, cfg_radar, x_locs[:,0], dets)
-
-            # Normalize the output
-            bf_output = np.abs(bf_output)
 
             # Send the data to the queue
             try:
