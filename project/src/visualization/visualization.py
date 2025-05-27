@@ -28,11 +28,20 @@ def configure_ax_db(ax):
     ax.set_ylabel("Y")
     ax.set_title("DBSCAN Clustering on Full Heatmap")
 
-
-def configure_ax_gtrack(ax, tracks):
+def configure_ax_gtrack(ax):
     ax.set_xlim(-70, 70)
     ax.set_ylim(0, 150)
+    # Draw the axes
+    ax.set_xlabel("X position")
+    ax.set_ylabel("Y position)")
+    ax.set_title("GTRACK 2D Tracks")
+    ax.grid(True)
 
+def update_ax_gtrack(ax, tracks, last_artists):
+
+    for art in last_artists:
+        art.remove()
+    last_artists.clear()
     # Filter active tracks
     active = [tr for tr in tracks if tr['status'] == 'ACTIVE']
 
@@ -62,7 +71,7 @@ def configure_ax_gtrack(ax, tracks):
             col = 'None'
 
         # Draw circle for each track
-        ax.scatter(x, y,
+        sc = ax.scatter(x, y,
                    s=500,
                    facecolor=col,
                    edgecolor=col_edge,
@@ -70,26 +79,24 @@ def configure_ax_gtrack(ax, tracks):
                    zorder=3)
 
         # Draw arrow for each track
-        ax.quiver(x, y, vx, vy,
+        qv = ax.quiver(x, y, vx, vy,
                   angles='xy',
                   scale_units='xy',
                   scale=1,
                   width=0.005,
                   color=col)
 
+        last_artists.extend([sc, qv])
+
     # Build legend
     handles = [
         mpatches.Patch(color=get_color_for_uid(uid), label=str(uid))
         for uid in ids
     ]
-    ax.legend(handles=handles,
+    leg = ax.legend(handles=handles,
               title='Track ID',
               loc='center left',
               bbox_to_anchor=(1.02, 0.5),
               borderaxespad=0.0)
 
-    # Draw the axes
-    ax.set_xlabel("X position")
-    ax.set_ylabel("Y position)")
-    ax.set_title("GTRACK 2D Tracks")
-    ax.grid(True)
+    last_artists.append(leg)

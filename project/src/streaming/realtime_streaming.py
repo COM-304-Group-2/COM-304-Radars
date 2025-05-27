@@ -22,7 +22,7 @@ loadPrcFileData('', 'window-type none')   # no native GL window
 from PyQt5 import QtWidgets
 
 from .prod_dca import producer_real_time_1843
-from visualization.visualization import configure_ax_bf, configure_ax_db, configure_ax_gtrack
+from visualization.visualization import configure_ax_bf, configure_ax_db, configure_ax_gtrack, update_ax_gtrack
 from utils.utils_streaming import cart2pol
 from gtrack.config import Detection
 from gtrack.module import GTrackModule2D
@@ -50,6 +50,8 @@ class MyApp(ShowBase):
 
         self.fig_3 = plt.figure(figsize=(8, 6), constrained_layout=True)
         self.ax_3 = self.fig_3.add_subplot(111)
+        configure_ax_gtrack(self.ax_3)
+
 
         self.last_frame_time = time.time()
         self.frame_counter = 0
@@ -69,6 +71,8 @@ class MyApp(ShowBase):
         self.cart2pol = cart2pol(self.X.ravel(), self.Y.ravel())
 
         self.tracker = GTrackModule2D(cfg_gtrack)
+
+        self.last_artists = []
 
 
     def updateTask(self, task):
@@ -142,6 +146,8 @@ class MyApp(ShowBase):
 
             #print(len(self.r_idxs))
 
+
+
             threshold = 0.01
             detections = [
                 Detection(r=self.r_idxs[i], az=self.phi[j], v=0, snr=to_plot[j, i])
@@ -149,6 +155,7 @@ class MyApp(ShowBase):
                 for j in range(len(self.phi))
                 if to_plot[j, i] >= threshold
             ]
+
 
             gtrack_output = self.tracker.step(detections)
 
@@ -171,9 +178,9 @@ class MyApp(ShowBase):
             #plot_2d_heatmap(self.ax_2, bf_2, self.phi, self.r_idxs, vmin=0, vmax=0.1)
 
             # Update the gtrack plot
-            self.ax_3.clear()
+            #self.ax_3.clear()
             tracks = gtrack_output['tracks']
-            configure_ax_gtrack(self.ax_3, tracks)
+            update_ax_gtrack(self.ax_3, tracks, self.last_artists)
 
             # FPS tracking
             current_time = time.time()
