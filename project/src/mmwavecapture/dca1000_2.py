@@ -207,7 +207,6 @@ class DCA1000:
                 sock = socket.socket(
                     socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP
                 )
-                print(port)
                 sock.bind((self.config.host_ip, port))
 
                 # Convert "DCA1000ConfigPort" to "config"
@@ -267,8 +266,6 @@ class DCA1000:
             cmd, (self.config.dca_ip, self.config.dca_config_port)
         )
 
-        print(self.socks["config"])
-
         # Receive the response from the DCA1000
         resp, addr = self.socks["config"].recvfrom(1024)
 
@@ -283,7 +280,6 @@ class DCA1000:
             return resp_dec[2]
 
         # Check if the command was successful
-        print(resp_dec)
         return resp_dec[2] == 0
 
     @log_command

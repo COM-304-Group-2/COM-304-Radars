@@ -34,58 +34,27 @@ def beamform_2d_s(beat_freq_data, radar_params, x_locs, dets):
 
     # Radar parameters
     lm = radar_params["lm"]
-    fs       = radar_params["sample_rate"]  # [Hz]
-    num_samps= radar_params["num_range"]  # ADC samples per chirp
-    N_dop    = radar_params["num_doppler"]                           # chirps per frame
-    lam      = radar_params["lm"]           # wavelength [m]
 
-    ## Compute velocity resolution
-    # chirp duration (neglecting idle time)
-    T_chirp = num_samps / fs                # [s]
-
-    # PRF
-    PRF     = 1.0 / T_chirp                 # [Hz]
-
-    # velocity‐resolution
-    vel_res = lam/2 * PRF / N_dop           # [m/s per Doppler bin]
-
-    # Convert angles to radians
+    # Get the azimuth angles and range indices
     phi = radar_params["phi"]
     num_phi = len(phi)
     r_idxs = radar_params["range_idx"]
 
+    # Compute the phase shifts for each azimuth angle
     angles = x_locs * np.cos(phi[:, np.newaxis])
     phase_shifts = np.exp((1j * 2 * np.pi / lm) * angles)
 
+    # Initialize the spherical power array
     r_idx, d_idx = np.nonzero(dets)
-
-    # Initialize output
     sph_pwr = np.zeros((num_phi, r_idxs.shape[0]), dtype=np.complex64)
 
-    detections = []
-
-
+    # Apply the phase shifts to the beat frequency data and sum over the antennas
     for d, r in zip(r_idx, d_idx):
-
         beat = beat_freq_data[:, d, r]
         beamformed_signal = beat[np.newaxis, :] * phase_shifts
         sph_pwr[:, r] = np.maximum(sph_pwr[:, r], np.abs(np.sum(beamformed_signal, axis=-1)))
 
-        snr = np.abs(np.sum(beamformed_signal, axis=-1))**8 ## rajouter variance? #shape (num_phi)
-
-        rang = np.repeat(r, num_phi)
-        #v = (d - N_dop/2) * vel_res
-        v = 0
-        v_all = np.repeat(v, num_phi)
-
-        small_detection = [
-        Detection(r_m, az, v, snr)
-        for r_m, az, v, snr in zip(rang, phi, v_all, snr)
-        ]
-
-        detections.extend(small_detection)
-
-    return sph_pwr, detections
+    return sph_pwr
 
 
 def cfar_ca_2d(power_map,
