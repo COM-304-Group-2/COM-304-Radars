@@ -1,3 +1,4 @@
+from . import realtime_streaming_config
 from . import realtime_streaming
 from gtrack.config import (GTrackConfig2D)
 import numpy as np
@@ -6,13 +7,15 @@ import numpy as np
 def main():
 
     # Parameters for the range-azimuth beamforming
-    r_idxs = np.arange(0, 60)
+    r_idxs = np.arange(0, 100)
     phi = np.deg2rad(np.arange(0, 180, 1))
+    width = 70 # azimuth width in degrees
 
     # Radar  parameters
     cfg_radar = {
         "range_idx": r_idxs,
         "phi": phi,
+        "width": width,
         "num_tx": 3,
         "num_rx": 4,
         "num_doppler": 16,
@@ -21,6 +24,7 @@ def main():
         "c": 3e8,
         "lm": 3e8 / 77e9,
         "slope": 70.150e6,
+        "n_radar": 2,
     }
 
     # Parameters for CFAR

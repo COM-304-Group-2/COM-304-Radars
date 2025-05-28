@@ -59,11 +59,11 @@ class MyApp(ShowBase):
 
         self.taskMgr.add(self.updateTask, "updateTask")
 
-        self.x1, self.y1 = 0.0, 0.0
+        self.x1, self.y1 = 0, 0.0
         self.x2, self.y2 = 0.0, 0.0
 
-        self.x = np.arange(-60, 60, 1)
-        self.y = np.arange(-60, 60, 1)
+        self.x = np.arange(-80, 80, 1)
+        self.y = np.arange(0, 100, 1)
         self.X, self.Y = np.meshgrid(self.x, self.y, indexing='xy')
 
         self.cart2pol = cart2pol(self.X.ravel(), self.Y.ravel())

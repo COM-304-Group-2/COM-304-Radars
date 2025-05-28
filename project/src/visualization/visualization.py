@@ -29,7 +29,7 @@ def configure_ax_db(ax):
     ax.set_title("DBSCAN Clustering on Full Heatmap")
 
 def configure_ax_gtrack(ax):
-    ax.set_xlim(-70, 70)
+    ax.set_xlim(-80, 80)
     ax.set_ylim(0, 150)
     # Draw the axes
     ax.set_xlabel("X position")

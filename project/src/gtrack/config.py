@@ -3,10 +3,10 @@ from typing import List, Tuple
 
 @dataclass
 class PresenceZone2D:
-    x_min: float
-    x_max: float
-    y_min: float
-    y_max: float
+    x_min: float # minimum x-coordinate of the zone
+    x_max: float # maximum x-coordinate of the zone
+    y_min: float # minimum y-coordinate of the zone
+    y_max: float # maximum y-coordinate of the zone
 
 @dataclass
 class GTrackConfig2D:
@@ -39,7 +39,7 @@ class GTrackConfig2D:
 @dataclass
 class Detection:
     def __init__(self, r, az, v, snr):
-        self.range   = r
-        self.azimuth = az
-        self.doppler = v
-        self.snr     = snr
+        self.range   = r # range in meters
+        self.azimuth = az # azimuth in radians
+        self.doppler = v # doppler velocity in m/s
+        self.snr     = snr # signal-to-noise ratio
