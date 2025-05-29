@@ -28,17 +28,15 @@ def configure_ax_db(ax):
     ax.set_ylabel("Y")
     ax.set_title("DBSCAN Clustering on Full Heatmap")
 
-def configure_ax_gtrack(ax):
-    ax.set_xlim(-80, 80)
-    ax.set_ylim(0, 150)
-    # Draw the axes
+def configure_ax_gtrack(ax, width, rgd):
+    ax.set_xlim(-width, width)
+    ax.set_ylim(0, rgd)
     ax.set_xlabel("X position")
     ax.set_ylabel("Y position")
     ax.set_title("GTRACK")
     ax.grid(True)
 
 def update_ax_gtrack(ax, tracks, last_artists):
-
     for art in last_artists:
         art.remove()
     last_artists.clear()

@@ -48,7 +48,7 @@ class MyApp(ShowBase):
 
         self.fig_3 = plt.figure(figsize=(8, 6), constrained_layout=True)
         self.ax_3 = self.fig_3.add_subplot(111)
-        configure_ax_gtrack(self.ax_3)
+        configure_ax_gtrack(self.ax_3, cfg_radar["width"], len(self.r_idxs))
 
 
         self.last_frame_time = time.time()
@@ -59,10 +59,11 @@ class MyApp(ShowBase):
 
         self.taskMgr.add(self.updateTask, "updateTask")
 
-        self.x1, self.y1 = 0, 0.0
+        self.x1, self.y1 = 0.0, 0.0
         self.x2, self.y2 = 0.0, 0.0
 
-        self.x = np.arange(-80, 80, 1)
+
+        self.x = np.arange(-cfg_radar["width"], cfg_radar["width"], 1)
         self.y = np.arange(0, 100, 1)
         self.X, self.Y = np.meshgrid(self.x, self.y, indexing='xy')
 
@@ -186,7 +187,7 @@ class MyApp(ShowBase):
 
         return Task.cont
 
-def main(cfg_radar, cfg_gtrack, cfg_cfar, gtrack=True):
+def main(cfg_radar, cfg_gtrack, cfg_cfar):
     q_main_1 = Queue(maxsize=1)  # ❗️ Only keep latest
     q_main_2 = Queue(maxsize=1)
 
