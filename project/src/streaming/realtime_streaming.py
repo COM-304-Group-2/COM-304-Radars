@@ -141,7 +141,6 @@ class MyApp(ShowBase):
 
             # Normalize the output
             to_plot = np.abs(Z_polar)
-            to_plot = to_plot
             to_plot /= np.max(to_plot)
             to_plot = to_plot ** 8
 
