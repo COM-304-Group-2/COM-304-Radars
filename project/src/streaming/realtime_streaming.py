@@ -136,6 +136,9 @@ class MyApp(ShowBase):
             ))
             Z_polar = interp_cart2pol(pts_back).reshape(PHI.shape)
 
+            # Flip the polar map to match the expected orientation
+            Z_polar = np.flip(Z_polar, axis=0)
+
             # Normalize the output
             to_plot = np.abs(Z_polar)
             to_plot = to_plot
