@@ -26,6 +26,7 @@ def main():
         "offset_x_2": offset_x_2,
         "offset_y_1": offset_y_1,
         "offset_y_2": offset_y_2,
+        "n_radar": 2,
         "num_tx": 3,
         "num_rx": 4,
         "num_doppler": 16,
@@ -33,8 +34,7 @@ def main():
         "sample_rate": 5166000,
         "c": 3e8,
         "lm": 3e8 / 77e9,
-        "slope": 70.150e6,
-        "n_radar": 2,
+        "slope": 70.150e6
     }
 
     # Parameters for CFAR
