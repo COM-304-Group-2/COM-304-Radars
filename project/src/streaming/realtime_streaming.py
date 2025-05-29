@@ -23,7 +23,7 @@ from PyQt5 import QtWidgets
 
 from .prod_dca import producer_real_time_1843
 from visualization.visualization import configure_ax_bf, configure_ax_db, configure_ax_gtrack, update_ax_gtrack
-from utils.utils_streaming import cart2pol
+from utils.utils import cart2pol
 from gtrack.config import Detection
 from gtrack.module import GTrackModule2D
 
@@ -100,7 +100,7 @@ class MyApp(ShowBase):
             r2 = np.hypot(self.X.ravel() - self.x2, self.Y.ravel() - self.y2)
             cart2pol2 = np.column_stack((phi2, r2))
 
-            # build your fast polar→Cartesian interpolators
+            # Cartesian interpolators
             interp1 = RegularGridInterpolator(
                 (self.phi, self.r_idxs),  # φ axis, r axis
                 bf_1,
