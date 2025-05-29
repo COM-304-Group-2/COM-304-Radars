@@ -25,7 +25,7 @@ def main():
     socket_data.close()
     socket_config.close()
 
-    print("AWR1843BOOST and DCA1000EVM started successfully.")
+    print("AWR1843BOOST and DCA1000EVM configured successfully.")
 
 
 
