@@ -62,7 +62,7 @@ class MyApp(ShowBase):
         self.taskMgr.add(self.updateTask, "updateTask")
 
         self.x1, self.y1 = 0.0, 0.0
-        self.x2, self.y2 = 0.0, 0.0
+        self.x2, self.y2 = -10, 0.0
 
         self.x = np.arange(-60, 60, 1)
         self.y = np.arange(-60, 60, 1)
@@ -226,8 +226,8 @@ def main(cfg_radar, cfg_gtrack, cfg_cfar, gtrack=True):
     q_main_2 = Queue(maxsize=1)
 
     producers = [
-        Process(target=producer_real_time_1843, args=(q_main_1, cfg_radar, cfg_cfar, 4099, 5000, "192.168.33.32", "192.168.33.182"), daemon=True),
-        Process(target=producer_real_time_1843, args=(q_main_2, cfg_radar, cfg_cfar, 4096, 4098, "192.168.33.30", "192.168.33.181"), daemon=True)]
+        Process(target=producer_real_time_1843, args=(q_main_2, cfg_radar, cfg_cfar, 4099, 5000, "192.168.33.32", "192.168.33.182"), daemon=True),
+        Process(target=producer_real_time_1843, args=(q_main_1, cfg_radar, cfg_cfar, 4096, 4098, "192.168.33.30", "192.168.33.181"), daemon=True)]
     consumers = [Process(target=consumer, args=(q_main_1, q_main_2, cfg_radar), daemon=True)]
 
     for p in producers: p.start()

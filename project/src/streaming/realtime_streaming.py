@@ -42,6 +42,7 @@ class MyApp(ShowBase):
 
         self.phi = cfg_radar["phi"]
         self.r_idxs = cfg_radar["range_idx"]
+        self.treshold = cfg_gtrack.min_snr_threshold
 
         self.fig = plt.figure(figsize=(6, 6))
         self.ax = self.fig.add_subplot(111, projection='polar')
@@ -142,15 +143,14 @@ class MyApp(ShowBase):
             # Normalize the output
             to_plot = np.abs(Z_polar)
             to_plot /= np.max(to_plot)
-            to_plot = to_plot ** 8
+            to_plot = to_plot ** 4
 
             # Convert map to Detections points
-            threshold = 0.01
             detections = [
                 Detection(r=self.r_idxs[i], az=self.phi[j], v=0, snr=to_plot[j, i])
                 for i in range(len(self.r_idxs))
                 for j in range(len(self.phi))
-                if to_plot[j, i] >= threshold
+                if to_plot[j, i] >= self.treshold
             ]
 
             # Run GTrack

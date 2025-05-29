@@ -9,11 +9,11 @@ def main():
     # Parameters for the range-azimuth beamforming
     r_idxs = np.arange(0, 100, 1)
     phi = np.deg2rad(np.arange(0, 180, 1))
-    width = 70 # azimuth width in degrees
+    width = 40 # azimuth width in degrees
 
     # Offsets for the radars
     offset_x_1 = 0.0  # x offset for the first radar
-    offset_x_2 = 0.0  # x offset for the second radar
+    offset_x_2 = -10.0  # x offset for the second radar
     offset_y_1 = 0.0  # y offset for the first radar
     offset_y_2 = 0.0  # y offset for the second radar
 
