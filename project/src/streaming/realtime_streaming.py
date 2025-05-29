@@ -39,6 +39,7 @@ class MyApp(ShowBase):
         self.q2 = queue_2
         self.latest_msg = {}
         self.msg_count = set()
+
         self.phi = cfg_radar["phi"]
         self.r_idxs = cfg_radar["range_idx"]
 
@@ -50,7 +51,6 @@ class MyApp(ShowBase):
         self.ax_3 = self.fig_3.add_subplot(111)
         configure_ax_gtrack(self.ax_3, cfg_radar["width"], len(self.r_idxs))
 
-
         self.last_frame_time = time.time()
         self.frame_counter = 0
         self.fps = 0
@@ -59,12 +59,11 @@ class MyApp(ShowBase):
 
         self.taskMgr.add(self.updateTask, "updateTask")
 
-        self.x1, self.y1 = 0.0, 0.0
-        self.x2, self.y2 = 0.0, 0.0
-
+        self.x1, self.y1 = cfg_radar["offset_x_1"], cfg_radar["offset_y_1"]
+        self.x2, self.y2 = cfg_radar["offset_x_2"], cfg_radar["offset_y_2"]
 
         self.x = np.arange(-cfg_radar["width"], cfg_radar["width"], 1)
-        self.y = np.arange(0, 100, 1)
+        self.y = self.r_idxs
         self.X, self.Y = np.meshgrid(self.x, self.y, indexing='xy')
 
         self.cart2pol = cart2pol(self.X.ravel(), self.Y.ravel())
@@ -141,7 +140,7 @@ class MyApp(ShowBase):
             to_plot = np.abs(Z_polar)
             to_plot = to_plot
             to_plot /= np.max(to_plot)
-            to_plot = to_plot ** 8
+            to_plot = to_plot ** 4
 
             # Convert map to Detections points
             threshold = 0.01
