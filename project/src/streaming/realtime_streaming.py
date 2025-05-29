@@ -143,7 +143,7 @@ class MyApp(ShowBase):
             to_plot = np.abs(Z_polar)
             to_plot = to_plot
             to_plot /= np.max(to_plot)
-            to_plot = to_plot ** 4
+            to_plot = to_plot ** 8
 
             # Convert map to Detections points
             threshold = 0.01
