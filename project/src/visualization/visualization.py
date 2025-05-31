@@ -80,7 +80,7 @@ def update_ax_gtrack(ax, tracks, last_artists):
         qv = ax.quiver(x, y, vx, vy,
                   angles='xy',
                   scale_units='xy',
-                  scale=0.5,
+                  scale=0.3,
                   width=0.005,
                   color=col)
 
