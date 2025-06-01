@@ -2,7 +2,7 @@ import numpy as np
 import queue
 import time
 
-from mmwave.dataloader.adc_modified import DCA1000
+from mmwave.dataloader.adc import DCA1000
 from gtrack.config import (GTrackConfig2D)
 from gtrack.module import GTrackModule2D
 from processing.processing import process_frame, beamform_2d_s
