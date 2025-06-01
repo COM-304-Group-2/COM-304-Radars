@@ -85,16 +85,11 @@ class DCA1000:
 
     """
 
-    def __init__(self, static_ip='192.168.33.30', adc_ip='192.168.33.180',
+    def __init__(self, static_ip='192.168.33.30', system_ip='192.168.33.180',
                  data_port=4098, config_port=4096):
-        # Save network data
-        # self.static_ip = static_ip
-        # self.adc_ip = adc_ip
-        # self.data_port = data_port
-        # self.config_port = config_port
 
         # Create configuration and data destinations
-        self.cfg_dest = (adc_ip, config_port)
+        self.cfg_dest = (system_ip, config_port)
         self.cfg_recv = (static_ip, config_port)
         self.data_recv = (static_ip, data_port)
 

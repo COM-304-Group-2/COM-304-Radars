@@ -10,7 +10,28 @@ from utils.utils import get_ant_pos_2d
 from processing.processing import compute_dbscan
 
 
-def producer_real_time_1843(q, cfg_radar, cfg_cfar, config_port, data_port, static_ip, adc_ip):
+def producer_real_time_1843(q, cfg_radar, cfg_cfar, config_port, data_port, static_ip, system_ip):
+    """
+    Producer function for real-time data acquisition from the DCA1000 connected to the AWR1843 radar.
+
+    Parameters
+    ----------
+    q : queue.Queue
+        The queue to which the processed data will be sent.
+    cfg_radar : dict
+        Configuration parameters for the radar, including range indices, number of transmitters, receivers, chirp loops, and ADC samples.
+    cfg_cfar : dict
+        Configuration parameters for the CFAR processing, including number of training and guard cells, and threshold scale.
+    config_port : str
+        The port for the DCA1000 configuration.
+    data_port : str
+        The port for the DCA1000 data.
+    static_ip : str
+        The static IP address for the DCA1000.
+    system_ip : str
+        The system IP address.
+    """
+
     # Parameters
     r_idxs = cfg_radar["range_idx"]
     num_tx = cfg_radar["num_tx"]
@@ -25,7 +46,7 @@ def producer_real_time_1843(q, cfg_radar, cfg_cfar, config_port, data_port, stat
 
     # Setup the DCA1000
     print("Starting DCA1000...")
-    dca = DCA1000(config_port=config_port, data_port=data_port, static_ip=static_ip, adc_ip=adc_ip)
+    dca = DCA1000(config_port=config_port, data_port=data_port, static_ip=static_ip, system_ip=system_ip)
     print("Reading data...")
 
     try:
