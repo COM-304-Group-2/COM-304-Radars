@@ -88,6 +88,7 @@ def get_ant_static_2d(num_frames, num_tx, num_rx, adc_samples):
         x_ant_pos: np.ndarray of virtual antenna x-positions
         z_ant_pos: np.ndarray of virtual antenna z-positions
     """
+
     lm = 3e8 / 77e9  # lambda for 77 GHz
 
     RX_X = np.array([-3*lm/2, -lm, -lm/2, 0])      # 4 Rx
@@ -246,6 +247,7 @@ def plot_2d_heatmap(ax, data, theta, r, vmin=0, vmax=0.1):
         r_max: float
             Maximum radius of the polar plot.
     """
+
     R, Theta  = np.meshgrid(r,theta)
 
     ax.pcolormesh(Theta, R, data, shading='nearest', cmap='jet', vmin=vmin, vmax=vmax)
@@ -265,6 +267,7 @@ def plot_2d_polar_heatmap(ax, data, az, el, vmin=0, vmax=0.1):
         r_max: float
             Maximum radius of the polar plot.
     """
+
     # Create the heatmap
     ax.pcolormesh(az, el, data.T, shading='nearest', cmap='jet', vmin=vmin, vmax=vmax)
 
@@ -286,6 +289,7 @@ def plot_3d_polar_heatmap(ax, data, az, el,r,threshold):
         r_max: float
             Maximum radius of the spherical coordinates.
     """
+
     # Create a meshgrid of spherical coordinates
     R, Phi, Theta = np.meshgrid(r, az, el, indexing='ij')
 
@@ -339,6 +343,7 @@ def cart2pol(x_flat, y_flat):
         - phi is the azimuthal angle in radians.
         - r is the radial distance from the origin.
     """
+
     phi_flat = np.arctan2(y_flat, x_flat)
     r_flat = np.hypot(x_flat, y_flat)
 
