@@ -3,6 +3,28 @@ import matplotlib.cm as cm
 import matplotlib.patches as mpatches
 
 def configure_ax_bf(ax, phi, r, vmin=0, vmax=0.1):
+    """
+    Configure axes for beamforming visualization.
+
+    Parameters:
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to configure.
+    phi : numpy.ndarray
+        Array of angles in radians.
+    r : numpy.ndarray
+        Array of radial distances.
+    vmin : float, optional
+        Minimum value for color scaling (default is 0).
+    vmax : float, optional
+        Maximum value for color scaling (default is 0.1).
+
+    Returns:
+    ----------
+    im : matplotlib.collections.QuadMesh
+        The pcolormesh object for the beamforming visualization.
+    """
+
     ax.set_theta_zero_location('E')
     ax.set_theta_direction(1)
     ax.set_thetamin(0)
@@ -24,11 +46,33 @@ def configure_ax_bf(ax, phi, r, vmin=0, vmax=0.1):
 
 
 def configure_ax_db(ax):
+    """
+    Configure axes for DBSCAN clustering visualization.
+
+    Parameters:
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to configure.
+    """
+
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_title("DBSCAN Clustering on Full Heatmap")
 
 def configure_ax_gtrack(ax, width, rgd):
+    """
+    Configure axes for GTRACK visualization.
+
+    Parameters:
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to configure.
+    width : float
+        The width of the area to visualize.
+    rgd : float
+        The range of the y-axis (height) for the visualization.
+    """
+
     ax.set_xlim(-width, width)
     ax.set_ylim(0, rgd)
     ax.set_xlabel("X position")
@@ -37,6 +81,18 @@ def configure_ax_gtrack(ax, width, rgd):
     ax.grid(True)
 
 def update_ax_gtrack(ax, tracks, last_artists):
+    """
+    Update the GTRACK visualization axes with the current tracks.
+
+    Parameters:
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to update.
+    tracks : list of dict
+        List of track dictionaries containing 'pos', 'vel', 'uid', and 'status'.
+    last_artists : list
+    """
+
     for art in last_artists:
         art.remove()
     last_artists.clear()
