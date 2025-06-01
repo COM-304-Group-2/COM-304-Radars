@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.cm as cm
 import matplotlib.patches as mpatches
 
+
 def configure_ax_bf(ax, phi, r, vmin=0, vmax=0.1):
     """
     Configure axes for beamforming visualization.
@@ -59,6 +60,7 @@ def configure_ax_db(ax):
     ax.set_ylabel("Y")
     ax.set_title("DBSCAN Clustering on Full Heatmap")
 
+
 def configure_ax_gtrack(ax, width, rgd):
     """
     Configure axes for GTRACK visualization.
@@ -79,6 +81,7 @@ def configure_ax_gtrack(ax, width, rgd):
     ax.set_ylabel("Y position")
     ax.set_title("GTRACK")
     ax.grid(True)
+
 
 def update_ax_gtrack(ax, tracks, last_artists):
     """
