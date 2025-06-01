@@ -1,12 +1,25 @@
 import numpy as np
-import scipy.io as sio
-
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 def get_ant_pos_1d(num_x_stp, num_rx):
+    """
+    Computes the antenna positions for a 1D radar setup.
+
+    Parameters
+    ----------
+    num_x_stp : int
+        Number of steps in the x-direction.
+    num_rx : int
+        Number of receive antennas.
+
+    Returns
+    -------
+    ant_pos : np.ndarray
+        Array of antenna positions in the x-direction.
+    """
+
+    # Calculate the number of steps for each receiver
     num_x_stp_ = num_x_stp // num_rx
+
     # define the antenna spacing
     lm = 3e8/77e9 # define lambda for the antenna spacing
 
@@ -19,12 +32,29 @@ def get_ant_pos_1d(num_x_stp, num_rx):
     # antenna positions for all receivers in the entire scan. /lm so that we don't have two factors of lm when we multiply them
     ant_pos = np.reshape(np.array([rx_pos + x_pos[i] for i in range(len(x_pos))]),(-1,1))
     ant_pos = ant_pos - ant_pos[0] # make sure first location is 0
-    x_pos = x_pos - x_pos[0] # make sure first location is 0
+
     return ant_pos
 
 def get_ant_pos_2d(num_x_stp, num_z_stp, num_rx):
+    """
+    Computes the antenna positions for a 2D radar setup.
+
+    Parameters
+    ----------
+    num_x_stp : int
+        Number of steps in the x-direction.
+    num_z_stp : int
+        Number of steps in the z-direction.
+    num_rx : int
+        Number of receive antennas.
+
+    Returns
+    -------
+    x_ant_pos : np.ndarray
+        Array of x-positions of the antennas.
+    """
+
     num_x_stp_ = num_x_stp // num_rx
-    # define the antenna spacing
 
     lm = 3e8/77e9 # define lambda for the antenna spacing
     stp_size = 300*lm/4/369 # step size in the z (vertical) direction
@@ -46,13 +76,15 @@ def get_ant_static_2d(num_frames, num_tx, num_rx, adc_samples):
     """
     Computes virtual antenna positions for static radar setup.
 
-    Args:
+    Parameters:
+    ----------
         num_frames: number of frames
         num_tx: number of transmit antennas
         num_rx: number of receive antennas
         adc_samples: number of ADC samples per chirp
 
     Returns:
+    -------
         x_ant_pos: np.ndarray of virtual antenna x-positions
         z_ant_pos: np.ndarray of virtual antenna z-positions
     """
@@ -84,8 +116,11 @@ def get_ant_static_2d(num_frames, num_tx, num_rx, adc_samples):
 
 # Helper function to get point cloud values
 def plot_3d_cart_heatmap(ax,voxel,xaxis,yaxis,zaxis,threshold):
-    '''' Returns X,Y,Z positions of voxels with power above a threshold.
+    ''''
+    Returns X,Y,Z positions of voxels with power above a threshold.
+
     Parameters:
+    - ax: matplotlib 3D axis to plot on
     - xaxis: x-values (for BF azimuth angles, for MF x distances)
     - yaxis: y-values (for BF elevation angles, for MF y distances)
     - zaxis: z-values (for range bins, for MF z distances)
@@ -96,6 +131,7 @@ def plot_3d_cart_heatmap(ax,voxel,xaxis,yaxis,zaxis,threshold):
     - Z_: z points
     - intesn: intensity of the points (used for coloring)
     '''
+
     thresh = np.max(np.abs(voxel)) * threshold
     
     # Find indices where voxel values exceed the threshold
@@ -123,6 +159,22 @@ def plot_3d_cart_heatmap(ax,voxel,xaxis,yaxis,zaxis,threshold):
 
 
 def load_raw_data(data_path):
+    """
+    Load raw radar data from a .mat file.
+
+    Parameters:
+    ----------
+    data_path : str
+        Path to the .mat file containing the raw radar data.
+
+    Returns:
+    -------
+    radar_params : dict
+        Dictionary containing radar parameters such as sample rate, number of samples, etc.
+    raw_data : np.ndarray
+        The raw radar data reshaped to (num_x_stp, num_z_stp, adc_samples).
+    """
+
     import scipy.io as sio
     mat_data = sio.loadmat(data_path)
 
@@ -153,6 +205,28 @@ def load_raw_data(data_path):
 
 
 def sph2cart(az, el, r):
+    """
+    Convert spherical coordinates to Cartesian coordinates.
+
+    Parameters:
+    ----------
+    az : array_like
+        Azimuthal angle in radians.
+    el : array_like
+        Polar angle in radians.
+    r : array_like
+        Radius (distance from the origin).
+
+    Returns:
+    ----------
+    x : array_like
+        x-coordinate in Cartesian coordinates.
+    y : array_like
+        y-coordinate in Cartesian coordinates.
+    z : array_like
+        z-coordinate in Cartesian coordinates.
+    """
+
     y = r * np.sin(el)
     rcosel = r * np.cos(el)
     x = rcosel * np.cos(az)
@@ -166,6 +240,7 @@ def plot_2d_heatmap(ax, data, theta, r, vmin=0, vmax=0.1):
     Plot a 2D heatmap in polar coordinates.
 
     Parameters:
+    ----------
         data: 2D numpy array
             The heatmap data to be plotted. Of size (theta x r)
         r_max: float
@@ -184,6 +259,7 @@ def plot_2d_polar_heatmap(ax, data, az, el, vmin=0, vmax=0.1):
     Plot a 2D heatmap in polar coordinates.
 
     Parameters:
+    ----------
         data: 2D numpy array
             The heatmap data to be plotted.
         r_max: float
@@ -204,6 +280,7 @@ def plot_3d_polar_heatmap(ax, data, az, el,r,threshold):
     Plot a 3D heatmap in spherical coordinates as a point cloud.
 
     Parameters:
+    ----------
         data: 3D numpy array
             The heatmap data to be plotted. Should have shape (n_r, n_phi, n_theta).
         r_max: float
@@ -245,6 +322,23 @@ def plot_3d_polar_heatmap(ax, data, az, el,r,threshold):
 
 
 def cart2pol(x_flat, y_flat):
+    """
+    Convert Cartesian coordinates to polar coordinates.
+
+    Parameters
+    ----------
+    x_flat : np.ndarray
+        Array of x-coordinates.
+    y_flat : np.ndarray
+        Array of y-coordinates.
+
+    Returns
+    -------
+    np.ndarray
+        Array of polar coordinates in the form of (phi, r), where:
+        - phi is the azimuthal angle in radians.
+        - r is the radial distance from the origin.
+    """
     phi_flat = np.arctan2(y_flat, x_flat)
     r_flat = np.hypot(x_flat, y_flat)
 
