@@ -5,6 +5,9 @@ import numpy as np
 
 
 def main():
+    """
+    Main function to start the real-time radar streaming and processing.
+    """
 
     # Parameters for the range-azimuth beamforming
     r_idxs = np.arange(0, 100, 1)
