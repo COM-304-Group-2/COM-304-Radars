@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def sph2cart_2d(r, az):
     """
     Convert spherical coordinates (r, azimuth) to Cartesian coordinates (x, y) in 2D.

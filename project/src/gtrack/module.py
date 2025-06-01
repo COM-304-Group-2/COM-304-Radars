@@ -7,6 +7,7 @@ from .config import GTrackConfig2D
 from .units import GTrackUnit2D
 from .utilities_2d import *
 
+
 class GTrackModule2D:
     """
     GTrackModule2D implements a 2D ground tracking algorithm for occupancy detection.

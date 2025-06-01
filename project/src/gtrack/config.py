@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Tuple
 
+
 @dataclass
 class PresenceZone2D:
     """
@@ -10,6 +11,7 @@ class PresenceZone2D:
     x_max: float # maximum x-coordinate of the zone
     y_min: float # minimum y-coordinate of the zone
     y_max: float # maximum y-coordinate of the zone
+
 
 @dataclass
 class GTrackConfig2D:
@@ -41,6 +43,7 @@ class GTrackConfig2D:
     def state_dim(self): return 4  # [x, y, vx, vy]
     @property
     def meas_dim(self): return 2   # [range, azimuth]
+
 
 @dataclass
 class Detection:

@@ -4,6 +4,7 @@ from .utilities_2d import (sph2cart_2d, cart2sph_2d,
                            calc_gating_limits_2d, wrap_angle)
 from .config import GTrackConfig2D
 
+
 class GTrackUnit2D:
     """
     GTrackUnit2D represents a single tracking unit in the 2D ground tracking algorithm.
