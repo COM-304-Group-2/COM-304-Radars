@@ -56,9 +56,9 @@ run_profile_super.py interfaces with the radar directly using mmwave-capture-std
 - Matplotlib: Range FFT and beamformed heatmaps
 - Panda3D: Real-time 3D object tracking with motion trails, IDs, and velocity vectors
   
-<img src="https://github.com/user-attachments/assets/12e61d04-63ec-4272-ad92-c2d0ebf2068b" width="300">
-<img src="https://github.com/user-attachments/assets/09d10cb4-bf4e-45f1-8119-903886d0683d" width="300">
-<img src="https://github.com/user-attachments/assets/72523497-35d3-4343-9169-a88f0616de22" width="300">
+<img src="https://github.com/user-attachments/assets/12e61d04-63ec-4272-ad92-c2d0ebf2068b" width="270">
+<img src="https://github.com/user-attachments/assets/09d10cb4-bf4e-45f1-8119-903886d0683d" width="270">
+<img src="https://github.com/user-attachments/assets/72523497-35d3-4343-9169-a88f0616de22" width="270">
 
 
 ## Architecture
