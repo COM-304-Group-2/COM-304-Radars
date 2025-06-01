@@ -8,6 +8,9 @@ from .units import GTrackUnit2D
 from .utilities_2d import *
 
 class GTrackModule2D:
+    """
+    GTrackModule2D implements a 2D ground tracking algorithm for occupancy detection.
+    """
     def __init__(self, config: GTrackConfig2D):
         self.config = config
         self.F, self.Q = self._build_matrices(config)
@@ -22,6 +25,22 @@ class GTrackModule2D:
         self.pres_off_count = 0
 
     def _build_matrices(self, cfg: GTrackConfig2D):
+        """
+        Build the state transition and process noise matrices for the Kalman filter.
+
+        Parameters
+        ----------
+        cfg : GTrackConfig2D
+            Configuration object containing parameters for the Kalman filter.
+
+        Returns
+        -------
+        F : np.ndarray
+            State transition matrix.
+        Q : np.ndarray
+            Process noise covariance matrix.
+        """
+
         dt = cfg.dt
         F = np.array([[1,0,dt,0],[0,1,0,dt],[0,0,1,0],[0,0,0,1]], dtype=float)
         F[2,2] = F[3,3] = 0.97
@@ -32,7 +51,22 @@ class GTrackModule2D:
         Q = np.array([[q11,0,q13,0],[0,q11,0,q13],[q13,0,q33,0],[0,q13,0,q33]], dtype=float)
         return F, Q
 
-    def step(self, points, variances=None):
+    def step(self, points):
+        """
+        Process a step of the tracking algorithm with the given points.
+
+        Parameters
+        ----------
+        points : list of Detection
+            List of detected points, each with range, azimuth, and doppler attributes.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the current tracks and presence flag.
+
+        """
+
         self.heartbeat += 1
         pts = points[:min(len(points), self.config.max_points)]
         for u in list(self.active):
@@ -51,6 +85,15 @@ class GTrackModule2D:
         return {'tracks': [u.report() for u in self.active], 'presence': self.presence_flag}
 
     def _associate(self, points):
+        """
+        Associate points with existing units based on gating criteria.
+
+        Parameters
+        ----------
+        points : list of Detection
+            List of detected points, each with range, azimuth, and doppler attributes.
+        """
+
         n = len(points)
         best_score = [np.inf] * n
         best_id = [-1] * n
@@ -67,6 +110,15 @@ class GTrackModule2D:
                 pt.is_unique = False
 
     def _allocate(self, points):
+        """
+        Allocate new units to unassigned points using DBSCAN clustering.
+
+        Parameters
+        ----------
+        points : list of Detection
+            List of detected points, each with range, azimuth, and doppler attributes.
+        """
+
         cfg = self.config
         # Select unassigned seeds
         seeds = [pt for pt in points if pt.assigned_id == -1]
@@ -103,11 +155,24 @@ class GTrackModule2D:
                 pt.is_unique = True
 
     def _reclaim(self, unit):
+        """
+        Reclaim a unit that has been marked as free.
+
+        Parameters
+        ----------
+        unit : GTrackUnit2D
+            The unit to be reclaimed.
+        """
+
         self.active.remove(unit)
         unit.stop()
         self.free.append(unit)
 
     def _presence(self):
+        """
+        Check for presence in defined zones based on the current active units.
+        """
+
         present = False
         for u in self.active:
             x, y = u.state[0], u.state[1]

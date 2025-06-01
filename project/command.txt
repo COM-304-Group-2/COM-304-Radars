@@ -1,16 +1,26 @@
-# radar_1
+### This file contains commands to set up the network interfaces and run the processing script.
+
+# Set up network interfaces for radar 1
 sudo ifconfig en10 inet 192.168.33.30 netmask 255.255.255.0 up
 
-# radar_2
+# Set up network interfaces for radar 2
 sudo ifconfig en12 inet 192.168.33.32 netmask 255.255.255.0 up
 
-sudo lsof -iUDP -nP | grep 4096
-kill -9 4944
-
+# Show the current network interfaces
 ifconfig
 
+# Show all the routes (for 192.168.33)
 netstat -rn | grep 192\.168\.33
+
+# Delete all the routes (for 192.168.33)
 sudo route delete -net 192.168.33.0/24
 
+# Show the processes listening on UDP port 4096
+sudo lsof -iUDP -nP | grep 4096
+
+# Kill the process that is using UDP port 4096
+kill -9 4944
+
+# Run the processing script
 python -m streaming.processing.processing
 

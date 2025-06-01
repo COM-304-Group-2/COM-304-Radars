@@ -5,6 +5,9 @@ from .utilities_2d import (sph2cart_2d, cart2sph_2d,
 from .config import GTrackConfig2D
 
 class GTrackUnit2D:
+    """
+    GTrackUnit2D represents a single tracking unit in the 2D ground tracking algorithm.
+    """
     def __init__(self, cfg: GTrackConfig2D, F: np.ndarray, Q: np.ndarray):
         self.cfg = cfg
         self.F = F
@@ -28,6 +31,10 @@ class GTrackUnit2D:
         self.confidence = 0.0
 
     def predict(self):
+        """
+        Predict the next state and measurement matrix for the tracking unit.
+        """
+
         if self.status != 'ACTIVE':
             self.apriori_state = self.state.copy()
             self.apriori_P = self.P.copy()
@@ -48,6 +55,23 @@ class GTrackUnit2D:
         self.S, self.S_inv = calc_gating_limits_2d(self.apriori_P, self.H, R)
 
     def score(self, idx, point, best_score, best_id, second_score):
+        """
+        Calculate the Mahalanobis score for a given point and update the best and second best scores.
+
+        Parameters
+        ----------
+        idx : int
+            The index of the point in the list of points.
+        point : Detection
+            The detection point with range and azimuth attributes.
+        best_score : np.ndarray
+            Array of best scores for each point.
+        best_id : np.ndarray
+            Array of best IDs for each point.
+        second_score : np.ndarray
+            Array of second best scores for each point.
+        """
+
         z = np.array([point.range, point.azimuth])
         r_pred, az_pred = cart2sph_2d(self.apriori_state[0], self.apriori_state[1])
 
@@ -64,14 +88,20 @@ class GTrackUnit2D:
                 second_score[idx] = m2
 
     def start(self, cluster):
+        """
+        Initialize the tracking unit with a cluster of points.
+
+        Parameters
+        ----------
+        cluster : list of Detection
+            List of detected points that form a cluster.
+        """
+
         zs = np.array([[pt.range, pt.azimuth] for pt in cluster])
         mean_r, mean_az = zs.mean(axis=0)
 
         x, y = sph2cart_2d(mean_r, mean_az)
-        seed = max(cluster, key=lambda pt: getattr(pt, 'snr', 0))
-        #v = seed.doppler
-        #vx = v * np.cos(seed.azimuth)
-        #vy = v * np.sin(seed.azimuth)
+
         vx = 0
         vy = 0
 
@@ -84,6 +114,15 @@ class GTrackUnit2D:
         self.miss_count = 0
 
     def update(self, points):
+        """
+        Update the tracking unit with new points and compute the new state.
+
+        Parameters
+        ----------
+        points : list of Detection
+            List of detected points, each with range and azimuth attributes.
+        """
+
         assigned = [pt for pt in points if pt.assigned_id == self.uid]
         if not assigned:
             self.miss_count += 1
@@ -107,6 +146,10 @@ class GTrackUnit2D:
         self.event()
 
     def event(self):
+        """
+        Update the status of the tracking unit based on hit and miss counts.
+        """
+
         c = self.cfg
         if self.status == 'DETECTION':
             if self.hit_count >= c.det_to_active_count:
@@ -118,6 +161,15 @@ class GTrackUnit2D:
             self.status = 'FREE'
 
     def report(self):
+        """
+        Generate a report of the current state of the tracking unit.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the tracking unit's unique ID, position, velocity, covariance, dimensions, confidence, and status.
+        """
+
         return {
             'uid': self.uid,
             'pos': self.state[:2].copy(),
@@ -129,6 +181,10 @@ class GTrackUnit2D:
         }
 
     def stop(self):
+        """
+        Stop the tracking unit by reinitializing it with the original configuration.
+        """
+
         uid = self.uid
         self.__init__(self.cfg, self.F, self.Q)
         self.uid = uid

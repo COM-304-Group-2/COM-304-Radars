@@ -1,7 +1,11 @@
 from mmwavecapture.radar import Radar
 from mmwavecapture import dca1000_2
 
+
 def main():
+    """
+    Main function to configure the DCA1000 EVM with another ip address and ports.
+    """
 
     # Initialize the DCA1000EVM
     print("Starting radar...")

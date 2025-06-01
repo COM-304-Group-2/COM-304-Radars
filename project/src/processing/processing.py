@@ -30,6 +30,11 @@ def beamform_2d_s(beat_freq_data, radar_params, x_locs, dets):
         A dictionary containing radar parameters such as sample rate, number of range samples, etc.
     dets : np.ndarray
         The detections from the CFAR process.
+
+    Returns
+    -------
+    sph_pwr : np.ndarray
+        The spherical power array after beamforming, with shape (num_phi, num_range).
     """
 
     # Radar parameters
@@ -123,18 +128,19 @@ def cfar_ca_2d(power_map,
 
 def process_frame(range_fft, cfar_params):
     """
-    Full pipeline for one frame:
-      range_fft : np.array, shape (N_ant, N_adc, N_chirps)
-      radar_params : dict with at least "fc" (Hz)
-      x_locs, z_locs : 1D arrays of antenna x,z positions (meters)
-      phi_*, theta_* : angle scan bounds/resolution (degrees)
-      cfar_params : dict with keys
-        num_train_r, num_train_d,
-        num_guard_r, num_guard_d,
-        threshold_scale
+    Process a single frame of range FFT data to detect targets using CFAR.
 
-    returns
-        dets : list of (r_idx, d_idx) tuples
+    Parameters
+    ----------
+    range_fft : np.ndarray
+        The range FFT data, typically a 2D array of shape (N_ant, N_R).
+    cfar_params : dict
+        A dictionary containing CFAR parameters such as number of training cells, guard cells, and threshold scale.
+
+    Returns
+    -------
+    dets : np.ndarray
+        A 2D boolean array indicating detected targets, where True indicates a detection.
     """
 
     # Doppler FFT
@@ -170,6 +176,11 @@ def compute_dbscan(output_top, r_idxs, phi, eps=0.5, min_samples=5, p_treshold= 
         The maximum distance between two samples for one to be considered as in the neighborhood of the other.
     min_samples : int
         The number of samples in a neighborhood for a point to be considered as a core point.
+
+    Returns
+    -------
+    db : DBSCAN
+        The fitted DBSCAN model containing the cluster labels.
     """
 
     # Build full coordinate grid

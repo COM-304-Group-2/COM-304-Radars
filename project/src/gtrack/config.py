@@ -3,6 +3,9 @@ from typing import List, Tuple
 
 @dataclass
 class PresenceZone2D:
+    """
+    Represents a 2D presence zone for occupancy tracking.
+    """
     x_min: float # minimum x-coordinate of the zone
     x_max: float # maximum x-coordinate of the zone
     y_min: float # minimum y-coordinate of the zone
@@ -10,6 +13,9 @@ class PresenceZone2D:
 
 @dataclass
 class GTrackConfig2D:
+    """
+    Configuration for the 2D ground track algorithm.
+    """
     max_points: int
     max_tracks: int
     dt: float                       # time step between frames (s)
@@ -38,6 +44,9 @@ class GTrackConfig2D:
 
 @dataclass
 class Detection:
+    """
+    Represents a detection in the 2D ground track algorithm.
+    """
     def __init__(self, r, az, v, snr):
         self.range   = r # range in meters
         self.azimuth = az # azimuth in radians
