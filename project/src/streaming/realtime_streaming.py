@@ -171,6 +171,9 @@ class MyApp(ShowBase):
             to_plot /= np.max(to_plot)
             to_plot = to_plot ** 8
 
+            # Update the beamforming plot
+            self.im.set_array(to_plot.ravel())
+
             # Convert map to Detections points
             detections = [
                 Detection(r=self.r_idxs[i], az=self.phi[j], v=0, snr=to_plot[j, i])
@@ -181,9 +184,6 @@ class MyApp(ShowBase):
 
             # Run GTrack
             gtrack_output = self.tracker.step(detections)
-
-            # Update the beamforming plot
-            self.im.set_array(to_plot.ravel())
 
             # Update the gtrack plot
             tracks = gtrack_output['tracks']
