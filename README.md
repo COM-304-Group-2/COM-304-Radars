@@ -31,7 +31,7 @@ ADC Capture → Background Removal → CFAR Detection → Beamforming → GTrack
 - Capture Interface: DCA1000EVM
 - Frequency: 77 GHz center
 - Bandwidth: 500 MHz
-- Data Format: 512 ADC samples, 992 range bins, 16 Doppler bins
+- Data Format: 512 ADC samples (or 1 sample per frame for realtime), 992 range bins, 16 Doppler bins
 - Virtual Antennas: 12
 
 Firmware configs: 
