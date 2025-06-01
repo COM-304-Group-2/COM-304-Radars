@@ -6,7 +6,6 @@ from sklearn.cluster import DBSCAN
 from gtrack.config import Detection
 
 
-
 def beamform_2d_s(beat_freq_data, radar_params, x_locs, dets):
     """
     Performs 2D beamforming along the azimuth (horizontal) dimension, this results in a bird eye view image.
