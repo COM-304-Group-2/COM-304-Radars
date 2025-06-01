@@ -97,6 +97,6 @@ def producer_real_time_1843(q, cfg_radar, cfg_cfar, config_port, data_port, stat
                 continue
 
     except KeyboardInterrupt:
-        print("🛑 Stopped by user.")
+        print("🛑 Producer for DCA1000 with ip " + static_ip + " and system ip " + system_ip + " stopped by user.")
     finally:
         dca.close()
