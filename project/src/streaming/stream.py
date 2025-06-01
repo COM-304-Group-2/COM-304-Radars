@@ -73,6 +73,8 @@ def main():
         pres_off_count=3 # frames to confirm presence off
     )
 
+    print("⌛️ Starting streaming...")
+
     # Start the streaming process
     realtime_streaming.main(cfg_radar, cfg_gtrack, cfg_cfar)
 

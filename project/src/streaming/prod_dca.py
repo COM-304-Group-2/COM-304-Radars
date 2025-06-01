@@ -45,9 +45,9 @@ def producer_real_time_1843(q, cfg_radar, cfg_cfar, config_port, data_port, stat
     x_locs, _, _ = get_ant_pos_2d(num_tx*num_rx, adc_samples, num_rx)
 
     # Setup the DCA1000
-    print("Starting DCA1000...")
+    print("⌛️ Starting producer for DCA1000 with ip " + static_ip + " and system ip " + system_ip)
     dca = DCA1000(config_port=config_port, data_port=data_port, static_ip=static_ip, system_ip=system_ip)
-    print("Reading data...")
+    print("✅ DCA1000 initialized.")
 
     try:
         while True:

@@ -242,6 +242,8 @@ def main(cfg_radar, cfg_gtrack, cfg_cfar):
     for p in producers: p.start()
     for c in consumers: c.start()
 
+    print("✅ Streaming started.")
+
     try:
         while True:
             time.sleep(1)
