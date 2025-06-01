@@ -91,6 +91,7 @@ def cfar_ca_2d(power_map,
     detection_map : 2D bool np.ndarray
         True where power_map exceeds the CFAR threshold.
     """
+
     Tr, Td = num_train_range, num_train_doppler
     Gr, Gd = num_guard_range, num_guard_doppler
 

@@ -22,5 +22,5 @@ sudo lsof -iUDP -nP | grep 4096
 kill -9 4944
 
 # Run the processing script
-python -m streaming.processing.processing
+python -m streaming.stream
 
