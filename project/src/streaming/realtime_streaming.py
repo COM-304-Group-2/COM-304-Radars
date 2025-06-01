@@ -46,6 +46,7 @@ def consumer(q1, q2, cfg_radar, cfg_gtrack):
     app = MyApp(q1, q2, cfg_radar, cfg_gtrack)
     app.run()
 
+
 class MyApp(ShowBase):
     """
     MyApp class that extends ShowBase to create a Panda3D application for real-time radar data visualization.
@@ -213,6 +214,7 @@ class MyApp(ShowBase):
             plt.pause(0.001)
 
         return Task.cont
+
 
 def main(cfg_radar, cfg_gtrack, cfg_cfar):
     """

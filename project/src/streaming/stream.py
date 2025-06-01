@@ -4,7 +4,6 @@ from gtrack.config import (GTrackConfig2D)
 import numpy as np
 
 
-
 def main():
     """
     Main function to start the real-time radar streaming and processing.
