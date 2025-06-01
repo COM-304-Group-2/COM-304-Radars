@@ -1,6 +1,8 @@
 from mmwavecapture.radar import Radar
 from mmwavecapture import dca1000_2
 
+
+
 def main():
     """
     Main function to start the AWR1843BOOST and DCA1000EVM with custom configuration.
