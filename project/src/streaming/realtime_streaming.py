@@ -5,12 +5,12 @@ sys.coinit_flags = 2
 
 import time
 import numpy as np
-from scipy.interpolate import griddata
-from scipy.interpolate import RegularGridInterpolator
 
+from scipy.interpolate import RegularGridInterpolator
 from multiprocessing import Process, Queue
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
+
 import matplotlib
 matplotlib.use('Qt5Agg')  # Use TkAgg backend for interactive plotting
 import matplotlib.pyplot as plt
@@ -29,10 +29,27 @@ from gtrack.module import GTrackModule2D
 
 
 def consumer(q1, q2, cfg_radar, cfg_gtrack):
+    """
+    Consumer function that processes data from two queues, performs beamforming,
+
+    Parameters
+    ----------
+    q1 : Queue
+        The first queue containing radar data.
+    q2 : Queue
+        The second queue containing radar data.
+    cfg_radar : dict
+        Configuration dictionary for the radar, including parameters like phi, range indices, and offsets.
+    cfg_gtrack : dict
+        Configuration dictionary for the GTrack module, including parameters like minimum SNR threshold.
+    """
     app = MyApp(q1, q2, cfg_radar, cfg_gtrack)
     app.run()
 
 class MyApp(ShowBase):
+    """
+    MyApp class that extends ShowBase to create a Panda3D application for real-time radar data visualization.
+    """
     def __init__(self, queue_1, queue_2, cfg_radar, cfg_gtrack):
         ShowBase.__init__(self)
         self.q1 = queue_1
@@ -75,6 +92,15 @@ class MyApp(ShowBase):
 
 
     def updateTask(self, task):
+        """
+        Update task that processes the radar data from the queues, performs beamforming,
+
+        Parameters
+        ----------
+        task : Task (unused)
+            The task object provided by Panda3D's task manager.
+        """
+
         try:
             for pid, q in enumerate((self.q1, self.q2)):
                 while not q.empty():
@@ -189,14 +215,30 @@ class MyApp(ShowBase):
         return Task.cont
 
 def main(cfg_radar, cfg_gtrack, cfg_cfar):
+    """
+    Main function to start the real-time radar streaming and processing.
+
+    Parameters
+    ----------
+    cfg_radar : dict
+        Configuration dictionary for the radar, including parameters like phi, range indices, and offsets.
+    cfg_gtrack : dict
+        Configuration dictionary for the GTrack module, including parameters like minimum SNR threshold.
+    cfg_cfar : dict
+        Configuration dictionary for the CFAR processing, including parameters like window size and guard size.
+    """
+
+    # Set up the queues
     q_main_1 = Queue(maxsize=1)  # ❗️ Only keep latest
     q_main_2 = Queue(maxsize=1)
 
+    # Create producer and consumer processes
     producers = [
         Process(target=producer_real_time_1843,args=(q_main_1, cfg_radar, cfg_cfar, 4096, 4098, "192.168.33.30", "192.168.33.180"), daemon=True),
         Process(target=producer_real_time_1843, args=(q_main_2, cfg_radar, cfg_cfar, 4099, 5000, "192.168.33.32", "192.168.33.182"), daemon=True)]
     consumers = [Process(target=consumer, args=(q_main_1, q_main_2, cfg_radar, cfg_gtrack), daemon=True)]
 
+    # Start the producer and consumer processes
     for p in producers: p.start()
     for c in consumers: c.start()
 
