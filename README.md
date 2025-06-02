@@ -31,7 +31,7 @@ ADC Capture → Background Removal → CFAR Detection → Beamforming → GTrack
 - Capture Interface: DCA1000EVM
 - Frequency: 77 GHz center
 - Bandwidth: 500 MHz
-- Data Format: 512 ADC samples (or 1 sample per frame for realtime), 992 range bins, 16 Doppler bins
+- Data Format: 992 range bins, 16 Doppler bins
 - Virtual Antennas: 12
 
 Firmware configs: 
@@ -47,10 +47,11 @@ scripts/
 
 Windows (with Lua & mmWaveStudio backend)
 `python realtime_streaming.py --exp_num 0 --lua_file scripts/1843_config_streaming.lua`
+Only one radar supported.
 
 macOS (fully Python + mmwave-capture-std backend)
 `python run_profile_super.py --cfg configs/profile_super.cfg`
-run_profile_super.py interfaces with the radar directly using mmwave-capture-std. No mmWave Studio required.
+run profile_super.py interfaces with the radar directly using mmwave-capture-std. No mmWave Studio required. Multiple radars supported.
 
 ## 📊 Visualization
 - Matplotlib: Range FFT and beamformed heatmaps
@@ -75,7 +76,7 @@ run_profile_super.py interfaces with the radar directly using mmwave-capture-std
 
 ## Key Results
 - 15 FPS real-time performance (MacBook Pro M1 + DCA1000)
-- Accurate tracking of up to 4 people with unique IDs
+- Accurate tracking of up to 1 people with unique IDs.
 - Works through thin walls and occlusions
 - Dual-radar fusion for enhanced angular resolution
 
