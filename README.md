@@ -43,7 +43,7 @@ scripts/
 └── profile_super.cfg
 ```
 
-## Running the Project
+## ⚙️ Running the Project
 
 Windows (with Lua & mmWaveStudio backend).
 Only one radar supported.
@@ -60,7 +60,7 @@ No mmWave Studio required. Multiple radars supported.
 <img src="https://github.com/user-attachments/assets/72523497-35d3-4343-9169-a88f0616de22" width="270">
 
 
-## Architecture
+## 🏛️ Architecture
 
 | Stage | Description |
 | -------- | ------- |
@@ -72,7 +72,7 @@ No mmWave Studio required. Multiple radars supported.
 | GTrack | Real-time multi-target Kalman tracking + DBSCAN cluster initialization | 
 | Visualization | Live 2D with object IDs, trails, and motion |
 
-## Key Results
+## 🔑 Key Results
 - 15 FPS real-time performance (MacBook Pro M1 + DCA1000)
 - Accurate tracking of 1 person.
 - Multiple people tracking with unique IDs. (less accurate)
@@ -85,7 +85,7 @@ No mmWave Studio required. Multiple radars supported.
 - [People Counting Using Low-Cost FMCW MIMO Radar](https://repository.tudelft.nl/record/uuid:a7450fad-43ff-446e-ba8e-d7a10fc50029)
 - [mmwave-capture-std](https://github.com/mmwave-capture-std/mmwave-capture-std/)
 
-## License Notice
+## 📋 License Notice
 
 Portions of this project include third-party code located in `src/mmwavecapture/`  
 Copyright (c) 2023 Louie Lu <louielu@cs.unc.edu>  
