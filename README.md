@@ -46,11 +46,9 @@ scripts/
 ## Running the Project
 
 Windows (with Lua & mmWaveStudio backend)
-`python realtime_streaming.py --exp_num 0 --lua_file scripts/1843_config_streaming.lua`
 Only one radar supported.
 
-macOS (fully Python + mmwave-capture-std backend)
-`python run_profile_super.py --cfg configs/profile_super.cfg`
+macOS/Linux (fully Python + mmwave-capture-std backend)
 run profile_super.py interfaces with the radar directly using mmwave-capture-std. No mmWave Studio required. Multiple radars supported.
 
 ## 📊 Visualization
@@ -76,7 +74,8 @@ run profile_super.py interfaces with the radar directly using mmwave-capture-std
 
 ## Key Results
 - 15 FPS real-time performance (MacBook Pro M1 + DCA1000)
-- Accurate tracking of up to 1 people with unique IDs.
+- Accurate tracking of 1 person.
+- Multiple people tracking with unique IDs. (less accurate)
 - Works through thin walls and occlusions
 - Dual-radar fusion for enhanced angular resolution
 
