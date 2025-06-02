@@ -45,11 +45,11 @@ scripts/
 
 ## Running the Project
 
-Windows (with Lua & mmWaveStudio backend)
+Windows (with Lua & mmWaveStudio backend).
 Only one radar supported.
 
-macOS/Linux (fully Python + mmwave-capture-std backend)
-run profile_super.py interfaces with the radar directly using mmwave-capture-std. No mmWave Studio required. Multiple radars supported.
+MacOS/Linux (fully Python + mmwave-capture-std backend). 
+No mmWave Studio required. Multiple radars supported.
 
 ## 📊 Visualization
 - Matplotlib: Range FFT and beamformed heatmaps
