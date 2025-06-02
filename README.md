@@ -22,7 +22,7 @@ This project was developed as part of COM-304: Communication Systems at EPFL and
 - 2D Cartesian localization and motion trails
 - Platform-independent Python implementation (macOS + Windows)
 
-## System Pipeline
+## 🚰 System Pipeline
 ADC Capture → Background Removal → CFAR Detection → Beamforming → GTrack → Visualization
 
 ## 🔧 Hardware Setup
