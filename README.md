@@ -36,20 +36,17 @@ ADC Capture → Background Removal → CFAR Detection → Beamforming → GTrack
 
 Firmware configs: 
 ```
-scripts/
-├── 1843_config.lua
-├── 1843_config_streaming.lua
-├── 1843_record.lua
+configs/
 └── profile_super.cfg
 ```
 
 ## ⚙️ Running the Project
 
-Windows (with Lua & mmWaveStudio backend).
-Only one radar supported.
-
 MacOS/Linux (fully Python + mmwave-capture-std backend). 
 No mmWave Studio required. Multiple radars supported.
+
+Windows (with Lua & mmWaveStudio backend). 
+Only one radar supported. (The code has not been tested on Windows. It is possible to make it work, but modifications must be made.)
 
 ## 📊 Visualization
 - Matplotlib: Range FFT and beamformed heatmaps
